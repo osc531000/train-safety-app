@@ -96,4 +96,380 @@
             background: #e9e9e9;
             padding: 15px;
             border-radius: 8px;
-            font-size:
+            font-size: 0.9em;
+            color: #666;
+            line-height: 1.4;
+            margin-top: 20px;
+        }
+
+        #manual-location-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 15px;
+            background: #eef;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        #manual-location-form h3 {
+            font-size: 1.1em;
+            color: #444;
+            margin-bottom: 5px;
+        }
+
+        #manual-location-form input[type="text"] {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        #manual-location-form button {
+            padding: 10px;
+            background: #4A90E2;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        #error-display {
+            background-color: #fdd;
+            color: #d33;
+            border: 1px solid #f99;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+            display: none;
+            margin-top: 10px;
+        }
+    </style>
+    
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-200YyS0I3u0Lp4R0K00cK0S7y6g0/cT0b6G6y2B0v8s="
+            crossorigin=""></script>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>🚂 기차 안전 경고 시스템</h1>
+            <p class="subtitle">위치를 기반으로 열차 운행 경고를 알려드립니다.</p>
+        </header>
+
+        <div id="map"></div>
+
+        <div class="status-section">
+            <div class="status-box">
+                <h2>현재 위치</h2>
+                <p id="location-status" class="status-text">... 위치를 찾는 중</p>
+            </div>
+            <div class="status-box">
+                <h2>가장 가까운 역</h2>
+                <p id="nearest-station-status" class="status-text">...</p>
+            </div>
+            <div class="status-box">
+                <h2>열차 운행 경고</h2>
+                <p id="warning-status" class="status-text">...</p>
+            </div>
+        </div>
+
+        <div id="manual-location-form">
+            <h3>수동으로 역 위치 지정하기</h3>
+            <p style="font-size:0.8em; color:#666;">정확한 위치 정보를 얻기 위해 역 이름을 입력하세요. (예: 용산)</p>
+            <input type="text" id="manual-station-input" placeholder="역 이름을 입력하세요">
+            <button onclick="setManualLocation()">역 지정</button>
+            <div style="font-size:0.9em; margin-top:10px;">
+                <p>수동 지정 역: <span id="manual-station-name">없음</span></p>
+                <p>수동 지정 경고 상태: <span id="manual-warning-status">...</span></p>
+            </div>
+        </div>
+        
+        <div id="error-display"></div>
+
+    </div>
+
+    <script>
+        // 현재 위치를 기반으로 역 정보를 찾는 자바스크립트 코드입니다.
+        const TRAIN_STATIONS = [
+            { name: '서울역', line: '1호선', lat: 37.5558, lng: 126.9723 },
+            { name: '용산역', line: '1호선', lat: 37.5298, lng: 126.9646 },
+            { name: '종각역', line: '1호선', lat: 37.5701, lng: 126.9831 },
+            { name: '시청역', line: '2호선', lat: 37.5657, lng: 126.9771 },
+            { name: '을지로입구역', line: '2호선', lat: 37.5663, lng: 126.9826 },
+            { name: '을지로3가역', line: '2호선', lat: 37.5668, lng: 126.9912 },
+            { name: '을지로4가역', line: '2호선', lat: 37.5665, lng: 126.9972 },
+            { name: '동대문역사문화공원역', line: '2호선', lat: 37.5654, lng: 127.0089 },
+            { name: '신당역', line: '2호선', lat: 37.5659, lng: 127.0177 },
+            { name: '왕십리역', line: '2호선', lat: 37.5612, lng: 127.0366 },
+            { name: '성수역', line: '2호선', lat: 37.5445, lng: 127.0560 },
+            { name: '잠실역', line: '2호선', lat: 37.5135, lng: 127.1002 },
+            { name: '강남역', line: '2호선', lat: 37.4981, lng: 127.0276 },
+            { name: '사당역', line: '2호선', lat: 37.4766, lng: 126.9818 },
+            { name: '신림역', line: '2호선', lat: 37.4842, lng: 126.9298 },
+            { name: '대림역', line: '2호선', lat: 37.4913, lng: 126.8973 },
+            { name: '구로디지털단지역', line: '2호선', lat: 37.4852, lng: 126.9015 },
+            { name: '합정역', line: '2호선', lat: 37.5504, lng: 126.9150 },
+            { name: '홍대입구역', line: '2호선', lat: 37.5574, lng: 126.9238 },
+            { name: '이대역', line: '2호선', lat: 37.5583, lng: 126.9463 },
+            { name: '신촌역', line: '2호선', lat: 37.5599, lng: 126.9405 },
+            { name: '서울대입구역', line: '2호선', lat: 37.4811, lng: 126.9529 },
+            { name: '종로3가역', line: '3호선', lat: 37.5704, lng: 126.9922 },
+            { name: '동대입구역', line: '3호선', lat: 37.5597, lng: 127.0049 },
+            { name: '교대역', line: '3호선', lat: 37.4917, lng: 127.0134 },
+            { name: '고속터미널역', line: '3호선', lat: 37.5049, lng: 127.0048 },
+            { name: '경복궁역', line: '3호선', lat: 37.5759, lng: 126.9734 },
+            { name: '충무로역', line: '3호선', lat: 37.5612, lng: 126.9936 },
+            { name: '명동역', line: '4호선', lat: 37.5609, lng: 126.9863 },
+            { name: '혜화역', line: '4호선', lat: 37.5822, lng: 127.0019 },
+            { name: '동대문역', line: '4호선', lat: 37.5714, lng: 127.0097 },
+            { name: '사당역', line: '4호선', lat: 37.4766, lng: 126.9818 },
+            { name: '총신대입구역(이수역)', line: '4호선', lat: 37.4862, lng: 126.9829 },
+            { name: '신길역', line: '5호선', lat: 37.5178, lng: 126.9150 },
+            { name: '여의도역', line: '5호선', lat: 37.5218, lng: 126.9254 },
+            { name: '영등포구청역', line: '5호선', lat: 37.5230, lng: 126.9032 },
+            { name: '까치산역', line: '5호선', lat: 37.5317, lng: 126.8468 },
+            { name: '김포공항역', line: '5호선', lat: 37.5621, lng: 126.8010 },
+            { name: '군자역', line: '5호선', lat: 37.5574, lng: 127.0782 },
+            { name: '광화문역', line: '5호선', lat: 37.5701, lng: 126.9774 },
+            { name: '보라매역', line: '7호선', lat: 37.4999, lng: 126.9200 },
+            { name: '보라매역', line: '신림선', lat: 37.5000, lng: 126.9204 },
+            { name: '가산디지털단지역', line: '7호선', lat: 37.4820, lng: 126.8824 },
+            { name: '고속터미널역', line: '7호선', lat: 37.5049, lng: 127.0048 },
+            { name: '어린이대공원역', line: '7호선', lat: 37.5476, lng: 127.0743 },
+            { name: '청담역', line: '7호선', lat: 37.5197, lng: 127.0543 },
+            { name: '공덕역', line: '6호선', lat: 37.5448, lng: 126.9565 },
+            { name: '이태원역', line: '6호선', lat: 37.5342, lng: 126.9942 },
+            { name: '녹사평역', line: '6호선', lat: 37.5349, lng: 126.9880 },
+            { name: '디지털미디어시티역', line: '6호선', lat: 37.5770, lng: 126.8906 }
+        ];
+
+        // 초기화
+        let map;
+        let userMarker;
+        let lastWarningTrain = null;
+        let lastLocationUpdateTime = 0;
+        let currentStatus = 'safe'; // 'safe', 'warning'
+
+        // 위치 추적 시작
+        function startTracking() {
+            if (navigator.geolocation) {
+                navigator.geolocation.watchPosition(updatePosition, showError, {
+                    enableHighAccuracy: true,
+                    timeout: 5000,
+                    maximumAge: 0
+                });
+            } else {
+                showError("위치 정보 기능을 지원하지 않는 브라우저입니다.");
+            }
+        }
+
+        // Leaflet 지도 초기화
+        function initMap(lat, lng) {
+            if (map) {
+                map.remove();
+            }
+            map = L.map('map').setView([lat, lng], 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            userMarker = L.marker([lat, lng]).addTo(map)
+                .bindPopup("현재 나의 위치").openPopup();
+        }
+
+        // 현재 위치 업데이트
+        function updatePosition(position) {
+            const currentTime = new Date().getTime();
+            if (currentTime - lastLocationUpdateTime < 3000) {
+                // 3초 이내에 업데이트된 경우 무시
+                return;
+            }
+            lastLocationUpdateTime = currentTime;
+
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            
+            document.getElementById('location-status').textContent = `✅ 위치 파악 완료`;
+
+            if (!map) {
+                initMap(lat, lng);
+            } else {
+                userMarker.setLatLng([lat, lng]);
+                map.setView([lat, lng]);
+            }
+
+            const nearestStation = findNearestStation(lat, lng);
+            document.getElementById('nearest-station-status').textContent = `${nearestStation.line} - ${nearestStation.name}`;
+
+            fetchTrainData(nearestStation);
+        }
+
+        // API를 통해 열차 데이터 가져오기 (서울시 지하철 + 코레일)
+        async function fetchTrainData(station) {
+            const seoulApiKey = '4a4d5943506f73633531764f4d6854';
+            const korailApiKey = 'b94e2e220ed1c348f7fe613a70da4ac557a1888a5d25f0e6e3d0e91e41ce4618';
+
+            const allTrains = [];
+            const isSeoulSubway = !['서울역', '용산역'].includes(station.name);
+
+            // 1. 서울시 지하철 API 호출
+            if (isSeoulSubway) {
+                const seoulUrl = `http://swopenapi.seoul.go.kr/api/subway/${seoulApiKey}/json/realtimeStationArrival/0/5/${encodeURIComponent(station.name)}`;
+                try {
+                    const response = await fetch(seoulUrl);
+                    const data = await response.json();
+                    if (data.realtimeStationArrival) {
+                        allTrains.push(...data.realtimeStationArrival);
+                    }
+                } catch (error) {
+                    console.error('서울시 API 호출 중 오류 발생:', error);
+                }
+            }
+
+            // 2. 코레일 API 호출
+            if (!isSeoulSubway) {
+                const korailUrl = `https://openapis.korail.com/samples/public/run/travelerTrainRunInfo?serviceKey=${korailApiKey}&stn_cd=${encodeURIComponent(station.name)}`;
+                try {
+                    const response = await fetch(korailUrl);
+                    const data = await response.json();
+                    if (data.response && data.response.body && data.response.body.items) {
+                        allTrains.push(...data.response.body.items.item);
+                    }
+                } catch (error) {
+                    console.error('코레일 API 호출 중 오류 발생:', error);
+                }
+            }
+            
+            checkWarnings(station, allTrains);
+        }
+
+        // 경고 확인 로직
+        function checkWarnings(nearestStation, trains) {
+            const warningDistance = 500; // 경고를 발생시킬 거리 (미터)
+            let isWarning = false;
+            let warningTrain = null;
+            
+            if (trains && Array.isArray(trains)) {
+                for (const train of trains) {
+                    const trainStatus = train.arvlMsg2 || train.정차구분명;
+                    
+                    if (trainStatus && (trainStatus.includes('진입') || trainStatus.includes('도착') || trainStatus.includes('출발'))) {
+                        isWarning = true;
+                        warningTrain = train;
+                        break;
+                    }
+                }
+            }
+
+            if (isWarning && lastWarningTrain !== (warningTrain.trainNo || warningTrain.열차번호)) {
+                const trainMsg = warningTrain.arvlMsg2 || `${warningTrain.열차번호}열차가 ${warningTrain.정차구분명} 중`;
+                document.getElementById('warning-status').textContent = `🚨 경고: ${trainMsg}`;
+                document.getElementById('warning-status').className = 'status-text warning-status';
+                lastWarningTrain = warningTrain.trainNo || warningTrain.열차번호;
+                currentStatus = 'warning';
+            } else if (!isWarning && currentStatus !== 'safe') {
+                document.getElementById('warning-status').textContent = '✅ 안전';
+                document.getElementById('warning-status').className = 'status-text';
+                lastWarningTrain = null;
+                currentStatus = 'safe';
+            }
+            
+            updateManualWarningStatus();
+        }
+
+        // 가장 가까운 역 찾기
+        function findNearestStation(lat, lng) {
+            let nearest = null;
+            let minDistance = Infinity;
+
+            for (const station of TRAIN_STATIONS) {
+                const distance = calculateDistance(lat, lng, station.lat, station.lng);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearest = station;
+                }
+            }
+            return nearest;
+        }
+
+        // 수동으로 역 위치 지정
+        function setManualLocation() {
+            const stationName = document.getElementById('manual-station-input').value.trim();
+            if (!stationName) {
+                showError('역 이름을 입력해 주세요.');
+                return;
+            }
+
+            const station = TRAIN_STATIONS.find(s => s.name === stationName);
+            if (station) {
+                document.getElementById('manual-station-name').textContent = station.name;
+                if (!map) {
+                    initMap(station.lat, station.lng);
+                } else {
+                    userMarker.setLatLng([station.lat, station.lng]);
+                    map.setView([station.lat, station.lng]);
+                }
+                
+                fetchTrainData(station);
+            } else {
+                showError(`${stationName}은(는) 목록에 없는 역입니다.`);
+            }
+        }
+        
+        // 수동 지정 역의 경고 상태 업데이트
+        function updateManualWarningStatus() {
+            const manualStationName = document.getElementById('manual-station-name').textContent;
+            const manualWarningStatusElement = document.getElementById('manual-warning-status');
+            
+            if (manualStationName === '없음') {
+                manualWarningStatusElement.textContent = '...';
+                manualWarningStatusElement.style.color = '#333';
+                manualWarningStatusElement.style.fontWeight = 'normal';
+                return;
+            }
+            
+            if (currentStatus === 'warning') {
+                const warningStatusText = document.getElementById('warning-status').textContent;
+                manualWarningStatusElement.textContent = warningStatusText;
+                manualWarningStatusElement.style.color = '#F44336';
+                manualWarningStatusElement.style.fontWeight = 'bold';
+            } else {
+                manualWarningStatusElement.textContent = '✅ 안전';
+                manualWarningStatusElement.style.color = '#4caf50';
+                manualWarningStatusElement.style.fontWeight = 'normal';
+            }
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error-display');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // 두 지점 간의 거리 계산 (미터 단위)
+        function calculateDistance(lat1, lng1, lat2, lng2) {
+            const R = 6371e3; // Earth's radius in meters
+            const φ1 = lat1 * Math.PI/180;
+            const φ2 = lat2 * Math.PI/180;
+            const Δφ = (lat2-lat1) * Math.PI/180;
+            const Δλ = (lng2-lng1) * Math.PI/180;
+
+            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                      Math.cos(φ1) * Math.cos(φ2) *
+                      Math.sin(Δλ/2) * Math.sin(Δλ/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+            return R * c;
+        }
+
+        // 페이지 로드 시 시작
+        window.onload = startTracking;
+    </script>
+</body>
+</html>
