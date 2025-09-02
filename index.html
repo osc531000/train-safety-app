@@ -234,8 +234,7 @@
             { name: '김포공항역', line: '5호선', lat: 37.5621, lng: 126.8010 },
             { name: '군자역', line: '5호선', lat: 37.5574, lng: 127.0782 },
             { name: '광화문역', line: '5호선', lat: 37.5701, lng: 126.9774 },
-            { name: '보라매역', line: '7호선', lat: 37.4999, lng: 126.9200 },
-            { name: '보라매역', line: '신림선', lat: 37.5000, lng: 126.9204 },
+            { name: '보라매역', line: '7호선', lat: 37.5000, lng: 126.9200 },
             { name: '가산디지털단지역', line: '7호선', lat: 37.4820, lng: 126.8824 },
             { name: '고속터미널역', line: '7호선', lat: 37.5049, lng: 127.0048 },
             { name: '어린이대공원역', line: '7호선', lat: 37.5476, lng: 127.0743 },
@@ -312,7 +311,7 @@
             const korailApiKey = 'b94e2e220ed1c348f7fe613a70da4ac557a1888a5d25f0e6e3d0e91e41ce4618';
 
             const allTrains = [];
-            const isSeoulSubway = !['서울역', '용산역'].includes(station.name);
+            const isSeoulSubway = !['서울역', '용산역'].includes(station.name); // 예시로 서울역, 용산역만 코레일로 간주
 
             // 1. 서울시 지하철 API 호출
             if (isSeoulSubway) {
@@ -334,6 +333,7 @@
                 try {
                     const response = await fetch(korailUrl);
                     const data = await response.json();
+                    // 코레일 API 응답 형태에 따라 데이터 파싱 로직이 필요합니다.
                     if (data.response && data.response.body && data.response.body.items) {
                         allTrains.push(...data.response.body.items.item);
                     }
