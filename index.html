@@ -1266,7 +1266,7 @@
                 let dangerousTrains = [];
 
                 for (const station of stationsInRange.slice(0, 5)) { // 상위 5개 역만 체크
-                    console.log(`🔍 역 체크: ${station.name} (타입: ${station.type})`);
+                    console.log(`🔍 역 체크: ${station.name} (타입: ${station.type}, 거리: ${Math.round(station.distance)}m)`);
                     
                     try {
                         let trainData = [];
@@ -1290,16 +1290,42 @@
                         allTrainData = [...allTrainData, ...trainData];
                         console.log(`📊 ${station.name} 총 열차: ${trainData.length}개`);
                         
-                        // 위험 거리 내 열차 확인
+                        // 위험 거리 내 열차 확인 (조건 완화)
                         const nearTrains = trainData.filter(train => {
                             const trainDistance = calculateDistance(position.lat, position.lng, station.lat, station.lng);
-                            const inDanger = trainDistance < alertDistance;
-                            if (inDanger) {
-                                console.log(`⚠️ 위험 열차 발견: ${train.line} (거리: ${Math.round(trainDistance)}m)`);
+                            
+                            // 경고 조건을 더 관대하게 설정
+                            let isInDanger = false;
+                            let dangerDistance = alertDistance;
+                            
+                            if (train.type === 'korail') {
+                                // 코레일은 더 넓은 범위에서 경고 (alertDistance * 2)
+                                dangerDistance = alertDistance * 2;
+                                isInDanger = trainDistance < dangerDistance;
+                                
+                                // 화물열차는 더욱 넓은 범위
+                                if (train.isFreight) {
+                                    dangerDistance = alertDistance * 3;
+                                    isInDanger = trainDistance < dangerDistance;
+                                }
+                                
+                                // 15분 이내 열차는 무조건 위험으로 분류
+                                if (train.arrivalCode === '0') {
+                                    isInDanger = true;
+                                }
+                            } else {
+                                // 지하철은 기본 거리
+                                isInDanger = trainDistance < dangerDistance;
                             }
-                            return inDanger;
+                            
+                            if (isInDanger) {
+                                const trainIcon = train.type === 'subway' ? '🚇' : train.isFreight ? '🚛' : '🚄';
+                                console.log(`⚠️ 위험 열차 발견: ${trainIcon} ${train.line} (거리: ${Math.round(trainDistance)}m, 기준: ${dangerDistance}m, 코드: ${train.arrivalCode})`);
+                            }
+                            return isInDanger;
                         });
                         
+                        console.log(`🚨 ${station.name}: 위험 열차 ${nearTrains.length}개 (전체 ${trainData.length}개 중)`);
                         dangerousTrains = [...dangerousTrains, ...nearTrains];
                     } catch (error) {
                         console.error(`❌ ${station.name} 데이터 조회 오류:`, error);
@@ -1521,11 +1547,15 @@
         };
 
         async function fetchKorailData(stationName, position) {
+            console.log(`🚄 코레일 데이터 조회 시작: ${stationName}`);
+            
             try {
                 // 1단계: 내 위치 근처를 지나가는 철도 노선 찾기
                 const nearbyLines = findNearbyRailwayLines(position);
+                console.log(`🛤️ 근처 철도 노선: ${nearbyLines.length}개`);
                 
                 if (nearbyLines.length === 0) {
+                    console.log(`🚄 ${stationName}: 근처 철도 노선 없음, 일반 코레일 데이터 생성`);
                     return await generateEnhancedKorailData(stationName, position);
                 }
 
@@ -1534,17 +1564,27 @@
                 // 2단계: 각 노선별로 지나가는 열차 조회
                 for (const line of nearbyLines) {
                     try {
+                        console.log(`🚄 ${line.name} 노선에서 열차 조회 중...`);
                         const passingTrains = await getTrainsPassingThroughPosition(line, position);
                         allPassingTrains.push(...passingTrains);
+                        console.log(`🚄 ${line.name}: ${passingTrains.length}개 열차 발견`);
                     } catch (error) {
-                        console.error(`${line.name} 노선 조회 실패:`, error);
+                        console.error(`❌ ${line.name} 노선 조회 실패:`, error);
                     }
                 }
                 
+                // 3단계: 결과가 없으면 일반 데이터로 보완
+                if (allPassingTrains.length === 0) {
+                    console.log(`🚄 ${stationName}: 노선별 조회 결과 없음, 일반 코레일 데이터로 보완`);
+                    const fallbackData = await generateEnhancedKorailData(stationName, position);
+                    allPassingTrains.push(...fallbackData);
+                }
+                
+                console.log(`🚄 ${stationName} 최종 결과: ${allPassingTrains.length}개 열차`);
                 return allPassingTrains;
                 
             } catch (error) {
-                console.error(`코레일 정보 조회 실패:`, error);
+                console.error(`🚄 ${stationName} 코레일 정보 조회 실패:`, error);
                 return await generateEnhancedKorailData(stationName, position);
             }
         }
@@ -1817,7 +1857,7 @@
         }
 
         function generateMockSubwayData(stationName) {
-            // 개발용 지하철 모의 데이터 (거의 항상 생성)
+            // 개발용 지하철 모의 데이터 (역-호선 정확 매칭)
             const hour = new Date().getHours();
             let subwayProbability = 0.95; // 기본 95%로 대폭 상승!
             
@@ -1832,16 +1872,16 @@
                 return [];
             }
             
-            const numTrains = Math.floor(Math.random() * 4) + 2; // 2-5대로 증가!
-            const trains = [];
-            
-            // 실제 서울 지하철 노선
-            const realSubwayLines = [
-                '1호선', '2호선', '3호선', '4호선', '5호선', 
-                '6호선', '7호선', '8호선', '9호선', 
-                '분당선', '신분당선', '경의중앙선', '공항철도',
-                '신림선', '우이신설선'
+            // 해당 역의 실제 호선 찾기
+            const station = TRAIN_STATIONS.find(s => s.name === stationName);
+            const availableLines = station ? station.lines.filter(line => !line.includes('KTX') && !line.includes('새마을') && !line.includes('무궁화') && !line.includes('ITX')) : [
+                '1호선', '2호선', '3호선', '4호선', '5호선'
             ];
+            
+            console.log(`🚇 ${stationName} 실제 호선: [${availableLines.join(', ')}]`);
+            
+            const numTrains = Math.floor(Math.random() * 3) + 2; // 2-4대
+            const trains = [];
             
             const destinations = [
                 '강남', '신도림', '사당', '잠실', '홍대입구', '신촌', 
@@ -1851,7 +1891,8 @@
             ];
             
             for (let i = 0; i < numTrains; i++) {
-                const line = realSubwayLines[Math.floor(Math.random() * realSubwayLines.length)];
+                // 해당 역의 실제 호선 중에서만 선택
+                const line = availableLines[Math.floor(Math.random() * availableLines.length)];
                 const destination = destinations[Math.floor(Math.random() * destinations.length)];
                 const minutesUntil = Math.floor(Math.random() * 12) + 1; // 1-12분
                 
@@ -1859,7 +1900,7 @@
                     type: 'subway',
                     station: stationName,
                     line: line,
-                    direction: Math.random() > 0.5 ? '내선순환' : '외선순환',
+                    direction: getDirectionForLine(line),
                     destination: destination,
                     arrivalMessage: generateSubwayArrivalMessage(minutesUntil),
                     arrivalCode: minutesUntil <= 3 ? '0' : '1',
@@ -1868,10 +1909,23 @@
                 };
                 
                 trains.push(train);
-                console.log(`🚇 지하철 생성: ${line} ${destination}행 (${minutesUntil}분)`);
+                console.log(`🚇 지하철 생성: ${line} ${destination}행 (${minutesUntil}분) - 매칭 정확!`);
             }
             
             return trains;
+        }
+
+        function getDirectionForLine(line) {
+            // 호선별 방향 구분
+            if (line === '2호선') {
+                return Math.random() > 0.5 ? '내선순환' : '외선순환';
+            } else if (line === '5호선' || line === '6호선') {
+                return Math.random() > 0.5 ? '상행' : '하행';
+            } else if (line.includes('선')) {
+                return Math.random() > 0.5 ? '상행' : '하행';  
+            } else {
+                return Math.random() > 0.5 ? '상행' : '하행';
+            }
         }
 
         function generateSubwayArrivalMessage(minutes) {
@@ -1882,23 +1936,23 @@
         }
 
         async function generateEnhancedKorailData(stationName, position) {
-            // 실제 시간표 기반 향상된 모의 데이터 (화물기차 포함)
+            // 실제 시간표 기반 향상된 모의 데이터 (화물기차 포함, 높은 확률)
             const currentTime = new Date();
             const hour = currentTime.getHours();
             
-            // 시간대별 열차 운행 빈도 조정 (화물기차는 24시간 운행)
-            let trainProbability = 0.7; // 기본 70%로 증가
+            // 시간대별 열차 운행 빈도 조정 (화물기차는 24시간 운행, 확률 대폭 증가!)
+            let trainProbability = 0.9; // 기본 90%로 대폭 증가!
             
-            if (hour >= 6 && hour <= 9) trainProbability = 0.95; // 출근 시간 95%
-            else if (hour >= 17 && hour <= 20) trainProbability = 0.9; // 퇴근 시간 90%
-            else if (hour >= 10 && hour <= 16) trainProbability = 0.8; // 오전/오후 80%
-            else if (hour >= 21 || hour <= 5) trainProbability = 0.6; // 심야 시간 60% (화물기차 많음)
+            if (hour >= 6 && hour <= 9) trainProbability = 0.98; // 출근 시간 98%
+            else if (hour >= 17 && hour <= 20) trainProbability = 0.95; // 퇴근 시간 95%
+            else if (hour >= 10 && hour <= 16) trainProbability = 0.9; // 오전/오후 90%
+            else if (hour >= 21 || hour <= 5) trainProbability = 0.85; // 심야도 85% (화물기차 많음)
             
             // 디버그 정보
-            console.log(`🕐 현재 ${hour}시, 열차 확률: ${Math.round(trainProbability * 100)}%`);
+            console.log(`🚄 ${stationName} 코레일 확률: ${Math.round(trainProbability * 100)}% (현재 ${hour}시)`);
             
             if (Math.random() > trainProbability) {
-                console.log(`🚫 확률적으로 열차 없음`);
+                console.log(`🚄 ${stationName}: 확률적으로 코레일 열차 없음`);
                 return [];
             }
 
@@ -1911,32 +1965,33 @@
             ];
             
             const trains = [];
-            const numTrains = Math.floor(Math.random() * 5) + 1; // 1-5대로 증가
+            const numTrains = Math.floor(Math.random() * 6) + 2; // 2-7대로 대폭 증가!
             
-            console.log(`🚄 생성할 열차 수: ${numTrains}대`);
+            console.log(`🚄 ${stationName}: 생성할 코레일 열차 수: ${numTrains}대`);
             
             for (let i = 0; i < numTrains; i++) {
                 const trainType = trainTypes[Math.floor(Math.random() * trainTypes.length)];
                 
                 // 화물열차 확률 조정 (심야 시간에 더 높음)
-                let isFreightTrain = false;
+                let isFreightTrain = trainType.isFreight;
                 if (trainType.isFreight) {
-                    const freightProbability = (hour >= 22 || hour <= 5) ? 0.4 : 0.2;
+                    const freightProbability = (hour >= 22 || hour <= 5) ? 0.6 : 0.3; // 확률 증가
                     isFreightTrain = Math.random() < freightProbability;
-                }
-                
-                if (trainType.isFreight && !isFreightTrain) {
-                    // 화물열차가 선택되었지만 확률적으로 제외되면 여객열차로 교체
-                    const passengerTypes = trainTypes.filter(t => !t.isFreight);
-                    const altType = passengerTypes[Math.floor(Math.random() * passengerTypes.length)];
-                    trainType.name = altType.name;
-                    trainType.destinations = altType.destinations;
+                    
+                    if (!isFreightTrain) {
+                        // 화물열차가 선택되었지만 확률적으로 제외되면 여객열차로 교체
+                        const passengerTypes = trainTypes.filter(t => !t.isFreight);
+                        const altType = passengerTypes[Math.floor(Math.random() * passengerTypes.length)];
+                        trainType.name = altType.name;
+                        trainType.destinations = altType.destinations;
+                        trainType.isFreight = false;
+                    }
                 }
                 
                 const destination = trainType.destinations[Math.floor(Math.random() * trainType.destinations.length)];
                 const minutesUntilPassing = trainType.isFreight ? 
-                    Math.floor(Math.random() * 45) + 5 : // 화물: 5-50분 후
-                    Math.floor(Math.random() * 30) + 1; // 여객: 1-30분 후
+                    Math.floor(Math.random() * 35) + 5 : // 화물: 5-40분 후
+                    Math.floor(Math.random() * 25) + 1; // 여객: 1-25분 후 (더 빨리)
                 
                 const train = {
                     type: 'korail',
@@ -1946,7 +2001,7 @@
                     direction: Math.random() > 0.5 ? '상행' : '하행',
                     destination: destination,
                     arrivalMessage: generateRealisticArrivalMessage(minutesUntilPassing, trainType.isFreight),
-                    arrivalCode: minutesUntilPassing <= 10 ? '0' : '1',
+                    arrivalCode: minutesUntilPassing <= 15 ? '0' : '1', // 경고 기준 완화 (15분)
                     departureStation: getRandomDepartureStation(),
                     passingTime: addMinutesToTime(currentTime, minutesUntilPassing),
                     delay: Math.random() > 0.9 ? Math.floor(Math.random() * 15) + '분 지연' : '정상',
@@ -1956,9 +2011,10 @@
                 
                 trains.push(train);
                 const freightIcon = trainType.isFreight ? '🚛' : '🚄';
-                console.log(`${freightIcon} 생성된 열차: ${train.line}-${train.trainNo} (${minutesUntilPassing}분 후)`);
+                console.log(`${freightIcon} ${stationName}: ${train.line}-${train.trainNo} (${minutesUntilPassing}분 후) - 코드: ${train.arrivalCode}`);
             }
             
+            console.log(`🚄 ${stationName} 최종 생성: ${trains.length}개 코레일 열차`);
             return trains;
         }
 
