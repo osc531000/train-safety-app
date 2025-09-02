@@ -599,29 +599,201 @@
             korail: 'b94e2e220ed1c348f7fe613a70da4ac557a1888a5d25f0e6e3d0e91e41ce4618'
         };
 
-        // 서울 지하철역 + 코레일 주요 역 데이터 (좌표 포함)
+        // 서울 지하철역 + 코레일 주요 역 데이터 (지하철역 대폭 확장)
         const TRAIN_STATIONS = [
-            // 지하철역
-            {name: '서울역', lat: 37.5547, lng: 126.9706, lines: ['1호선', '4호선', 'KTX', '공항철도'], type: 'both'},
+            // === 1호선 주요역 ===
+            {name: '서울역', lat: 37.5547, lng: 126.9706, lines: ['1호선', 'KTX', '공항철도'], type: 'both'},
+            {name: '종각', lat: 37.5699, lng: 126.9825, lines: ['1호선'], type: 'subway'},
             {name: '종로3가', lat: 37.5714, lng: 126.9910, lines: ['1호선', '3호선', '5호선'], type: 'subway'},
-            {name: '을지로3가', lat: 37.5660, lng: 126.9911, lines: ['2호선', '3호선'], type: 'subway'},
-            {name: '명동', lat: 37.5634, lng: 126.9864, lines: ['4호선'], type: 'subway'},
             {name: '동대문', lat: 37.5714, lng: 127.0098, lines: ['1호선', '4호선'], type: 'subway'},
+            {name: '신설동', lat: 37.5751, lng: 127.0255, lines: ['1호선'], type: 'subway'},
+            {name: '영등포', lat: 37.5150, lng: 126.9076, lines: ['1호선'], type: 'subway'},
+            {name: '구로', lat: 37.5033, lng: 126.8817, lines: ['1호선'], type: 'subway'},
+            {name: '인천', lat: 37.4436, lng: 126.6434, lines: ['1호선'], type: 'subway'},
+            
+            // === 2호선 주요역 ===
+            {name: '시청', lat: 37.5659, lng: 126.9777, lines: ['1호선', '2호선'], type: 'subway'},
+            {name: '을지로입구', lat: 37.5663, lng: 126.9820, lines: ['2호선'], type: 'subway'},
+            {name: '을지로3가', lat: 37.5660, lng: 126.9911, lines: ['2호선', '3호선'], type: 'subway'},
+            {name: '동대문역사문화공원', lat: 37.5665, lng: 127.0078, lines: ['2호선', '4호선', '5호선'], type: 'subway'},
+            {name: '신당', lat: 37.5662, lng: 127.0177, lines: ['2호선', '6호선'], type: 'subway'},
+            {name: '성수', lat: 37.5448, lng: 127.0557, lines: ['2호선'], type: 'subway'},
+            {name: '건대입구', lat: 37.5403, lng: 127.0701, lines: ['2호선', '7호선'], type: 'subway'},
+            {name: '강변', lat: 37.5353, lng: 127.0944, lines: ['2호선'], type: 'subway'},
+            {name: '잠실나루', lat: 37.5203, lng: 127.1038, lines: ['2호선'], type: 'subway'},
+            {name: '잠실', lat: 37.5134, lng: 127.1000, lines: ['2호선', '8호선'], type: 'subway'},
+            {name: '종합운동장', lat: 37.5109, lng: 127.0732, lines: ['2호선', '9호선'], type: 'subway'},
+            {name: '삼성', lat: 37.5086, lng: 127.0633, lines: ['2호선'], type: 'subway'},
+            {name: '선릉', lat: 37.5045, lng: 127.0493, lines: ['2호선', '분당선'], type: 'subway'},
+            {name: '역삼', lat: 37.4996, lng: 127.0364, lines: ['2호선'], type: 'subway'},
             {name: '강남', lat: 37.4979, lng: 127.0276, lines: ['2호선', '신분당선'], type: 'subway'},
+            {name: '교대', lat: 37.4938, lng: 127.0146, lines: ['2호선', '3호선'], type: 'subway'},
+            {name: '서초', lat: 37.4837, lng: 127.0054, lines: ['2호선'], type: 'subway'},
+            {name: '방배', lat: 37.4813, lng: 126.9976, lines: ['2호선'], type: 'subway'},
+            {name: '사당', lat: 37.4767, lng: 126.9814, lines: ['2호선', '4호선'], type: 'subway'},
+            {name: '신림', lat: 37.4844, lng: 126.9295, lines: ['2호선'], type: 'subway'},
+            {name: '구로디지털단지', lat: 37.4853, lng: 126.9012, lines: ['2호선'], type: 'subway'},
+            {name: '신도림', lat: 37.5089, lng: 126.8912, lines: ['1호선', '2호선'], type: 'subway'},
+            {name: '당산', lat: 37.5344, lng: 126.9024, lines: ['2호선', '9호선'], type: 'subway'},
+            {name: '합정', lat: 37.5497, lng: 126.9135, lines: ['2호선', '6호선'], type: 'subway'},
             {name: '홍대입구', lat: 37.5574, lng: 126.9233, lines: ['2호선', '6호선', '공항철도'], type: 'subway'},
             {name: '신촌', lat: 37.5556, lng: 126.9364, lines: ['2호선'], type: 'subway'},
-            {name: '이태원', lat: 37.5346, lng: 126.9947, lines: ['6호선'], type: 'subway'},
-            {name: '사당', lat: 37.4767, lng: 126.9814, lines: ['2호선', '4호선'], type: 'subway'},
-            {name: '잠실', lat: 37.5134, lng: 127.1000, lines: ['2호선', '8호선'], type: 'subway'},
-            {name: '건대입구', lat: 37.5403, lng: 127.0701, lines: ['2호선', '7호선'], type: 'subway'},
-            {name: '김포공항', lat: 37.5588, lng: 126.8014, lines: ['5호선', '9호선', '공항철도'], type: 'subway'},
-            {name: '왕십리', lat: 37.5617, lng: 127.0378, lines: ['2호선', '5호선', '분당선', '중앙선'], type: 'subway'},
-            {name: '고속터미널', lat: 37.5044, lng: 127.0051, lines: ['3호선', '7호선', '9호선'], type: 'subway'},
+            {name: '이대', lat: 37.5563, lng: 126.9464, lines: ['2호선'], type: 'subway'},
             
-            // 코레일 주요 역 추가
+            // === 3호선 주요역 ===
+            {name: '대화', lat: 37.6585, lng: 126.7670, lines: ['3호선'], type: 'subway'},
+            {name: '불광', lat: 37.6108, lng: 126.9298, lines: ['3호선', '6호선'], type: 'subway'},
+            {name: '연신내', lat: 37.6186, lng: 126.9210, lines: ['3호선'], type: 'subway'},
+            {name: '독립문', lat: 37.5742, lng: 126.9567, lines: ['3호선'], type: 'subway'},
+            {name: '경복궁', lat: 37.5759, lng: 126.9732, lines: ['3호선'], type: 'subway'},
+            {name: '안국', lat: 37.5760, lng: 126.9852, lines: ['3호선'], type: 'subway'},
+            {name: '충무로', lat: 37.5614, lng: 126.9936, lines: ['3호선', '4호선'], type: 'subway'},
+            {name: '동국대입구', lat: 37.5584, lng: 126.9988, lines: ['3호선'], type: 'subway'},
+            {name: '고속터미널', lat: 37.5044, lng: 127.0051, lines: ['3호선', '7호선', '9호선'], type: 'subway'},
+            {name: '남부터미널', lat: 37.4766, lng: 127.0037, lines: ['3호선'], type: 'subway'},
+            {name: '양재', lat: 37.4674, lng: 127.0347, lines: ['3호선'], type: 'subway'},
+            
+            // === 4호선 주요역 ===
+            {name: '명동', lat: 37.5634, lng: 126.9864, lines: ['4호선'], type: 'subway'},
+            {name: '회현', lat: 37.5592, lng: 126.9783, lines: ['4호선'], type: 'subway'},
+            {name: '서울역', lat: 37.5547, lng: 126.9706, lines: ['1호선', '4호선', 'KTX'], type: 'both'},
+            {name: '이촌', lat: 37.5342, lng: 126.9675, lines: ['4호선'], type: 'subway'},
+            {name: '동작', lat: 37.5020, lng: 126.9788, lines: ['4호선'], type: 'subway'},
+            {name: '총신대입구', lat: 37.4862, lng: 126.9816, lines: ['4호선'], type: 'subway'},
+            
+            // === 5호선 주요역 ===
+            {name: '김포공항', lat: 37.5588, lng: 126.8014, lines: ['5호선', '9호선', '공항철도'], type: 'subway'},
+            {name: '송정', lat: 37.5616, lng: 126.8134, lines: ['5호선'], type: 'subway'},
+            {name: '마곡', lat: 37.5608, lng: 126.8250, lines: ['5호선'], type: 'subway'},
+            {name: '발산', lat: 37.5587, lng: 126.8370, lines: ['5호선'], type: 'subway'},
+            {name: '우장산', lat: 37.5485, lng: 126.8361, lines: ['5호선'], type: 'subway'},
+            {name: '화곡', lat: 37.5413, lng: 126.8396, lines: ['5호선'], type: 'subway'},
+            {name: '까치산', lat: 37.5312, lng: 126.8469, lines: ['5호선'], type: 'subway'},
+            {name: '신정', lat: 37.5248, lng: 126.8567, lines: ['5호선'], type: 'subway'},
+            {name: '목동', lat: 37.5268, lng: 126.8750, lines: ['5호선'], type: 'subway'},
+            {name: '오목교', lat: 37.5245, lng: 126.8957, lines: ['5호선'], type: 'subway'},
+            {name: '양평', lat: 37.5345, lng: 126.8905, lines: ['5호선'], type: 'subway'},
+            {name: '영등포구청', lat: 37.5245, lng: 126.8957, lines: ['2호선', '5호선'], type: 'subway'},
+            {name: '여의도', lat: 37.5217, lng: 126.9244, lines: ['5호선'], type: 'subway'},
+            {name: '마포', lat: 37.5444, lng: 126.9458, lines: ['5호선'], type: 'subway'},
+            {name: '공덕', lat: 37.5443, lng: 126.9490, lines: ['5호선', '6호선'], type: 'subway'},
+            {name: '애오개', lat: 37.5515, lng: 126.9565, lines: ['5호선'], type: 'subway'},
+            {name: '충정로', lat: 37.5596, lng: 126.9635, lines: ['2호선', '5호선'], type: 'subway'},
+            {name: '서대문', lat: 37.5656, lng: 126.9662, lines: ['5호선'], type: 'subway'},
+            {name: '광화문', lat: 37.5715, lng: 126.9769, lines: ['5호선'], type: 'subway'},
+            {name: '동대문역사문화공원', lat: 37.5665, lng: 127.0078, lines: ['2호선', '4호선', '5호선'], type: 'subway'},
+            {name: '청구', lat: 37.5606, lng: 127.0149, lines: ['5호선'], type: 'subway'},
+            {name: '왕십리', lat: 37.5617, lng: 127.0378, lines: ['2호선', '5호선', '분당선'], type: 'subway'},
+            {name: '행당', lat: 37.5575, lng: 127.0437, lines: ['5호선'], type: 'subway'},
+            {name: '답십리', lat: 37.5664, lng: 127.0588, lines: ['5호선'], type: 'subway'},
+            {name: '장한평', lat: 37.5613, lng: 127.0644, lines: ['5호선'], type: 'subway'},
+            {name: '군자', lat: 37.5571, lng: 127.0792, lines: ['5호선'], type: 'subway'},
+            {name: '아차산', lat: 37.5572, lng: 127.1032, lines: ['5호선'], type: 'subway'},
+            {name: '광나루', lat: 37.5450, lng: 127.1081, lines: ['5호선'], type: 'subway'},
+            {name: '천호', lat: 37.5387, lng: 127.1238, lines: ['5호선'], type: 'subway'},
+            {name: '강동', lat: 37.5278, lng: 127.1316, lines: ['5호선'], type: 'subway'},
+            
+            // === 6호선 주요역 ===
+            {name: '응암', lat: 37.6016, lng: 126.9136, lines: ['6호선'], type: 'subway'},
+            {name: '역촌', lat: 37.5889, lng: 126.9273, lines: ['6호선'], type: 'subway'},
+            {name: '독바위', lat: 37.5824, lng: 126.9342, lines: ['6호선'], type: 'subway'},
+            {name: '연신내', lat: 37.6186, lng: 126.9210, lines: ['3호선', '6호선'], type: 'subway'},
+            {name: '구산', lat: 37.6093, lng: 126.9167, lines: ['6호선'], type: 'subway'},
+            {name: '새절', lat: 37.5931, lng: 126.9251, lines: ['6호선'], type: 'subway'},
+            {name: '증산', lat: 37.5816, lng: 126.9049, lines: ['6호선'], type: 'subway'},
+            {name: '디지털미디어시티', lat: 37.5763, lng: 126.9009, lines: ['6호선'], type: 'subway'},
+            {name: '월드컵경기장', lat: 37.5686, lng: 126.8973, lines: ['6호선'], type: 'subway'},
+            {name: '마포구청', lat: 37.5634, lng: 126.9086, lines: ['6호선'], type: 'subway'},
+            {name: '망원', lat: 37.5555, lng: 126.9105, lines: ['6호선'], type: 'subway'},
+            {name: '상수', lat: 37.5479, lng: 126.9222, lines: ['6호선'], type: 'subway'},
+            {name: '이태원', lat: 37.5346, lng: 126.9947, lines: ['6호선'], type: 'subway'},
+            {name: '한강진', lat: 37.5320, lng: 127.0051, lines: ['6호선'], type: 'subway'},
+            {name: '버티고개', lat: 37.5408, lng: 127.0201, lines: ['6호선'], type: 'subway'},
+            {name: '약수', lat: 37.5543, lng: 127.0097, lines: ['3호선', '6호선'], type: 'subway'},
+            {name: '동묘앞', lat: 37.5713, lng: 127.0153, lines: ['1호선', '6호선'], type: 'subway'},
+            {name: '창신', lat: 37.5754, lng: 127.0174, lines: ['6호선'], type: 'subway'},
+            {name: '보문', lat: 37.5843, lng: 127.0172, lines: ['6호선'], type: 'subway'},
+            {name: '안암', lat: 37.5852, lng: 127.0276, lines: ['6호선'], type: 'subway'},
+            
+            // === 7호선 주요역 ===
+            {name: '장암', lat: 37.6446, lng: 127.0770, lines: ['7호선'], type: 'subway'},
+            {name: '도봉산', lat: 37.6898, lng: 127.0470, lines: ['7호선'], type: 'subway'},
+            {name: '수락산', lat: 37.6479, lng: 127.0774, lines: ['7호선'], type: 'subway'},
+            {name: '마들', lat: 37.6353, lng: 127.0593, lines: ['7호선'], type: 'subway'},
+            {name: '노원', lat: 37.6544, lng: 127.0617, lines: ['4호선', '7호선'], type: 'subway'},
+            {name: '중계', lat: 37.6412, lng: 127.0734, lines: ['7호선'], type: 'subway'},
+            {name: '하계', lat: 37.6362, lng: 127.0694, lines: ['7호선'], type: 'subway'},
+            {name: '공릉', lat: 37.6254, lng: 127.0729, lines: ['7호선'], type: 'subway'},
+            {name: '태릉입구', lat: 37.6178, lng: 127.0754, lines: ['7호선'], type: 'subway'},
+            {name: '먹골', lat: 37.6173, lng: 127.0773, lines: ['7호선'], type: 'subway'},
+            {name: '중화', lat: 37.6100, lng: 127.0778, lines: ['7호선'], type: 'subway'},
+            {name: '상봉', lat: 37.5967, lng: 127.0851, lines: ['7호선', '경의중앙선'], type: 'subway'},
+            {name: '면목', lat: 37.5892, lng: 127.0895, lines: ['7호선'], type: 'subway'},
+            {name: '사가정', lat: 37.5815, lng: 127.0941, lines: ['7호선'], type: 'subway'},
+            {name: '용마산', lat: 37.5743, lng: 127.0988, lines: ['7호선'], type: 'subway'},
+            {name: '중곡', lat: 37.5668, lng: 127.0841, lines: ['7호선'], type: 'subway'},
+            {name: '군자', lat: 37.5571, lng: 127.0792, lines: ['5호선', '7호선'], type: 'subway'},
+            {name: '어린이대공원', lat: 37.5482, lng: 127.0743, lines: ['7호선'], type: 'subway'},
+            {name: '청담', lat: 37.5199, lng: 127.0565, lines: ['7호선'], type: 'subway'},
+            {name: '강남구청', lat: 37.5176, lng: 127.0417, lines: ['7호선'], type: 'subway'},
+            {name: '학동', lat: 37.5143, lng: 127.0312, lines: ['7호선'], type: 'subway'},
+            {name: '논현', lat: 37.5104, lng: 127.0227, lines: ['7호선'], type: 'subway'},
+            {name: '반포', lat: 37.4979, lng: 127.0118, lines: ['7호선'], type: 'subway'},
+            {name: '내방', lat: 37.4918, lng: 126.9967, lines: ['7호선'], type: 'subway'},
+            {name: '이수', lat: 37.4866, lng: 126.9816, lines: ['4호선', '7호선'], type: 'subway'},
+            {name: '남성', lat: 37.4844, lng: 126.9709, lines: ['7호선'], type: 'subway'},
+            {name: '숭실대입구', lat: 37.4964, lng: 126.9575, lines: ['7호선'], type: 'subway'},
+            {name: '상도', lat: 37.5028, lng: 126.9484, lines: ['7호선'], type: 'subway'},
+            {name: '장승배기', lat: 37.5100, lng: 126.9366, lines: ['7호선'], type: 'subway'},
+            {name: '신대방삼거리', lat: 37.4949, lng: 126.9137, lines: ['7호선'], type: 'subway'},
+            {name: '보라매', lat: 37.4939, lng: 126.9258, lines: ['7호선'], type: 'subway'},
+            {name: '대림', lat: 37.4932, lng: 126.8955, lines: ['2호선', '7호선'], type: 'subway'},
+            
+            // === 8호선 주요역 ===
+            {name: '모란', lat: 37.2934, lng: 127.1283, lines: ['8호선'], type: 'subway'},
+            {name: '남한산성입구', lat: 37.4520, lng: 127.1376, lines: ['8호선'], type: 'subway'},
+            {name: '단대오거리', lat: 37.4607, lng: 127.1282, lines: ['8호선'], type: 'subway'},
+            {name: '신흥', lat: 37.4685, lng: 127.1194, lines: ['8호선'], type: 'subway'},
+            {name: '수진', lat: 37.4849, lng: 127.1019, lines: ['8호선'], type: 'subway'},
+            {name: '몽촌토성', lat: 37.5053, lng: 127.0972, lines: ['8호선'], type: 'subway'},
+            {name: '석촌', lat: 37.5051, lng: 127.1059, lines: ['8호선'], type: 'subway'},
+            {name: '송파', lat: 37.5051, lng: 127.1137, lines: ['8호선'], type: 'subway'},
+            {name: '가락시장', lat: 37.4919, lng: 127.1189, lines: ['8호선'], type: 'subway'},
+            {name: '문정', lat: 37.4846, lng: 127.1226, lines: ['8호선'], type: 'subway'},
+            {name: '장지', lat: 37.4784, lng: 127.1264, lines: ['8호선'], type: 'subway'},
+            
+            // === 9호선 주요역 ===
+            {name: '개화', lat: 37.5777, lng: 126.7986, lines: ['9호선'], type: 'subway'},
+            {name: '공항시장', lat: 37.5624, lng: 126.8125, lines: ['9호선'], type: 'subway'},
+            {name: '신방화', lat: 37.5573, lng: 126.8130, lines: ['9호선'], type: 'subway'},
+            {name: '마곡나루', lat: 37.5660, lng: 126.8252, lines: ['9호선'], type: 'subway'},
+            {name: '양천향교', lat: 37.5517, lng: 126.8329, lines: ['9호선'], type: 'subway'},
+            {name: '가양', lat: 37.5614, lng: 126.8547, lines: ['9호선'], type: 'subway'},
+            {name: '증미', lat: 37.5580, lng: 126.8642, lines: ['9호선'], type: 'subway'},
+            {name: '등촌', lat: 37.5504, lng: 126.8606, lines: ['9호선'], type: 'subway'},
+            {name: '염창', lat: 37.5463, lng: 126.8746, lines: ['9호선'], type: 'subway'},
+            {name: '신목동', lat: 37.5374, lng: 126.8746, lines: ['9호선'], type: 'subway'},
+            {name: '선유도', lat: 37.5354, lng: 126.8937, lines: ['9호선'], type: 'subway'},
+            {name: '노량진', lat: 37.5134, lng: 126.9427, lines: ['1호선', '9호선'], type: 'subway'},
+            {name: '노들', lat: 37.5183, lng: 126.9518, lines: ['9호선'], type: 'subway'},
+            {name: '흑석', lat: 37.5056, lng: 126.9615, lines: ['9호선'], type: 'subway'},
+            {name: '동작', lat: 37.5020, lng: 126.9788, lines: ['4호선', '9호선'], type: 'subway'},
+            {name: '구반포', lat: 37.5048, lng: 127.0047, lines: ['9호선'], type: 'subway'},
+            {name: '신논현', lat: 37.5048, lng: 127.0252, lines: ['9호선'], type: 'subway'},
+            {name: '언주', lat: 37.5178, lng: 127.0371, lines: ['9호선'], type: 'subway'},
+            {name: '선정릉', lat: 37.5045, lng: 127.0493, lines: ['2호선', '9호선'], type: 'subway'},
+            {name: '삼전', lat: 37.4971, lng: 127.0830, lines: ['9호선'], type: 'subway'},
+            {name: '석촌고분', lat: 37.5051, lng: 127.1059, lines: ['8호선', '9호선'], type: 'subway'},
+            {name: '석촌', lat: 37.5051, lng: 127.1059, lines: ['8호선', '9호선'], type: 'subway'},
+            {name: '송파나루', lat: 37.5152, lng: 127.1119, lines: ['9호선'], type: 'subway'},
+            {name: '한성백제', lat: 37.5086, lng: 127.1263, lines: ['9호선'], type: 'subway'},
+            {name: '올림픽공원', lat: 37.5152, lng: 127.1365, lines: ['5호선', '9호선'], type: 'subway'},
+            {name: '둔촌오륜', lat: 37.5267, lng: 127.1366, lines: ['9호선'], type: 'subway'},
+            {name: '중앙보훈병원', lat: 37.5346, lng: 127.1363, lines: ['9호선'], type: 'subway'},
+            
+            // === 코레일 주요 역 추가 ===
             {name: '용산역', lat: 37.5297, lng: 126.9645, lines: ['KTX', '새마을호', '무궁화호'], type: 'korail'},
             {name: '청량리역', lat: 37.5806, lng: 127.0472, lines: ['KTX', 'ITX-청춘', '무궁화호'], type: 'korail'},
-            {name: '영등포역', lat: 37.5150, lng: 126.9076, lines: ['KTX', '새마을호', '무궁화호'], type: 'korail'},
             {name: '수원역', lat: 37.2663, lng: 127.0011, lines: ['KTX', '새마을호', '무궁화호', '1호선'], type: 'both'},
             {name: '대전역', lat: 36.3315, lng: 127.4344, lines: ['KTX', '새마을호', '무궁화호'], type: 'korail'},
             {name: '동대구역', lat: 35.8790, lng: 128.6286, lines: ['KTX', '새마을호', '무궁화호'], type: 'korail'},
@@ -864,10 +1036,26 @@
                 distance: calculateDistance(position.lat, position.lng, station.lat, station.lng)
             })).sort((a, b) => a.distance - b.distance);
 
+            console.log(`🏢 근처 역 ${nearbyStations.length}개 발견:`);
+            nearbyStations.slice(0, 10).forEach(station => {
+                console.log(`   ${station.type === 'subway' ? '🚇' : station.type === 'korail' ? '🚄' : '🚆'} ${station.name}: ${Math.round(station.distance)}m`);
+            });
+
             document.getElementById('nearby-stations-count').textContent = nearbyStations.length;
             
             if (nearbyStations.length > 0) {
-                displayNearbyStations(nearbyStations.slice(0, 8)); // 상위 8개 표시
+                displayNearbyStations(nearbyStations.slice(0, 10)); // 상위 10개 표시
+                
+                // 지하철역과 코레일역 개수 세기
+                const subwayStations = nearbyStations.filter(s => s.type === 'subway' || s.type === 'both').length;
+                const korailStations = nearbyStations.filter(s => s.type === 'korail' || s.type === 'both').length;
+                
+                updateDebugInfo(
+                    `근처 역: ${nearbyStations.length}개`, 
+                    `🚇 지하철역: ${subwayStations}개, 🚄 코레일역: ${korailStations}개`
+                );
+            } else {
+                updateDebugInfo('근처에 역이 없습니다 (5km 반경)');
             }
         }
 
@@ -901,15 +1089,17 @@
         }
 
         // 디버그 패널 확장
-        function updateDebugInfo(info) {
+        function updateDebugInfo(info, extraInfo = '') {
             const debugDiv = document.getElementById('gps-debug');
             const debugInfo = document.getElementById('debug-info');
             const timestamp = new Date().toLocaleTimeString();
+            
             debugInfo.innerHTML = `
                 <div style="margin-bottom: 5px;"><strong>📍 ${timestamp}</strong></div>
                 <div>${info}</div>
+                ${extraInfo ? `<div style="margin-top: 3px; font-size: 11px;">${extraInfo}</div>` : ''}
                 <div style="margin-top: 5px; font-size: 11px; opacity: 0.8;">
-                    💡 감지 반경: 8km | 열차 확률: 60-95%
+                    💡 감지 반경: 8km | 확률: 95-98%
                 </div>
             `;
             debugDiv.style.display = 'block';
@@ -1018,34 +1208,52 @@
                 let dangerousTrains = [];
 
                 for (const station of stationsInRange.slice(0, 5)) { // 상위 5개 역만 체크
+                    console.log(`🔍 역 체크: ${station.name} (타입: ${station.type})`);
+                    
                     try {
                         let trainData = [];
                         
                         // 지하철 데이터 조회
                         if (station.type === 'subway' || station.type === 'both') {
+                            console.log(`🚇 ${station.name} 지하철 데이터 조회 시작`);
                             const subwayData = await fetchSubwayRealtime(station.name);
                             trainData = [...trainData, ...subwayData];
+                            console.log(`🚇 ${station.name} 지하철 데이터: ${subwayData.length}개`);
                         }
                         
                         // 코레일 데이터 조회 (철도 노선 기반)
                         if (station.type === 'korail' || station.type === 'both') {
+                            console.log(`🚄 ${station.name} 코레일 데이터 조회 시작`);
                             const korailData = await fetchKorailData(station.name, position);
                             trainData = [...trainData, ...korailData];
+                            console.log(`🚄 ${station.name} 코레일 데이터: ${korailData.length}개`);
                         }
                         
                         allTrainData = [...allTrainData, ...trainData];
+                        console.log(`📊 ${station.name} 총 열차: ${trainData.length}개`);
                         
                         // 위험 거리 내 열차 확인
                         const nearTrains = trainData.filter(train => {
                             const trainDistance = calculateDistance(position.lat, position.lng, station.lat, station.lng);
-                            return trainDistance < alertDistance;
+                            const inDanger = trainDistance < alertDistance;
+                            if (inDanger) {
+                                console.log(`⚠️ 위험 열차 발견: ${train.line} (거리: ${Math.round(trainDistance)}m)`);
+                            }
+                            return inDanger;
                         });
                         
                         dangerousTrains = [...dangerousTrains, ...nearTrains];
                     } catch (error) {
-                        console.error(`${station.name} 데이터 조회 오류:`, error);
+                        console.error(`❌ ${station.name} 데이터 조회 오류:`, error);
                     }
                 }
+
+                console.log(`📊 총 결과: ${allTrainData.length}개 열차 감지, ${dangerousTrains.length}개 위험 열차`);
+                
+                // 열차 타입별 개수 세기
+                const subwayCount = allTrainData.filter(t => t.type === 'subway').length;
+                const korailCount = allTrainData.filter(t => t.type === 'korail').length;
+                console.log(`🚇 지하철: ${subwayCount}개, 🚄 코레일: ${korailCount}개`);
 
                 // 경고 처리 - 지속적으로 표시
                 if (dangerousTrains.length > 0) {
@@ -1276,7 +1484,7 @@
                         });
                         
                         // 디버그 정보 출력
-                        console.log(`📍 근처 노선 발견: ${line.name}`);
+                                console.log(`📍 근처 노선 발견: ${line.name}`);
                         console.log(`   구간: ${station1.name} → ${station2.name}`);
                         console.log(`   거리: ${Math.round(distanceToLine)}m`);
                         
@@ -1519,41 +1727,56 @@
         }
 
         function generateMockSubwayData(stationName) {
-            // 개발용 지하철 모의 데이터 (확률 대폭 증가)
+            // 개발용 지하철 모의 데이터 (거의 항상 생성)
             const hour = new Date().getHours();
-            let subwayProbability = 0.7; // 기본 70%
+            let subwayProbability = 0.95; // 기본 95%로 대폭 상승!
             
-            if (hour >= 7 && hour <= 9) subwayProbability = 0.95; // 출근시간 95%
-            if (hour >= 18 && hour <= 20) subwayProbability = 0.9; // 퇴근시간 90%
-            if (hour >= 22 || hour <= 5) subwayProbability = 0.3; // 심야 30%
+            if (hour >= 7 && hour <= 9) subwayProbability = 0.98; // 출근시간 98%
+            if (hour >= 18 && hour <= 20) subwayProbability = 0.98; // 퇴근시간 98%
+            if (hour >= 22 || hour <= 5) subwayProbability = 0.8; // 심야도 80%
             
-            console.log(`🚇 지하철 확률: ${Math.round(subwayProbability * 100)}%`);
+            console.log(`🚇 지하철 모의데이터 확률: ${Math.round(subwayProbability * 100)}% (${stationName})`);
             
             if (Math.random() > subwayProbability) {
+                console.log(`🚇 ${stationName}: 확률적으로 지하철 없음`);
                 return [];
             }
             
-            const numTrains = Math.floor(Math.random() * 3) + 1; // 1-3대
+            const numTrains = Math.floor(Math.random() * 4) + 2; // 2-5대로 증가!
             const trains = [];
             
+            // 실제 서울 지하철 노선
+            const realSubwayLines = [
+                '1호선', '2호선', '3호선', '4호선', '5호선', 
+                '6호선', '7호선', '8호선', '9호선', 
+                '분당선', '신분당선', '경의중앙선', '공항철도'
+            ];
+            
+            const destinations = [
+                '강남', '신도림', '사당', '잠실', '홍대입구', '신촌', 
+                '종로3가', '명동', '이대', '건대입구', '왕십리', '교대',
+                '고속터미널', '김포공항', '인천', '수원', '성수', '합정'
+            ];
+            
             for (let i = 0; i < numTrains; i++) {
-                const lines = ['1호선', '2호선', '3호선', '4호선', '5호선', '6호선', '7호선', '8호선', '9호선'];
-                const destinations = ['강남', '신도림', '사당', '잠실', '홍대', '신촌', '종로3가', '명동'];
-                const minutesUntil = Math.floor(Math.random() * 15) + 1; // 1-15분
+                const line = realSubwayLines[Math.floor(Math.random() * realSubwayLines.length)];
+                const destination = destinations[Math.floor(Math.random() * destinations.length)];
+                const minutesUntil = Math.floor(Math.random() * 12) + 1; // 1-12분
                 
-                trains.push({
+                const train = {
                     type: 'subway',
                     station: stationName,
-                    line: lines[Math.floor(Math.random() * lines.length)],
+                    line: line,
                     direction: Math.random() > 0.5 ? '내선순환' : '외선순환',
-                    destination: destinations[Math.floor(Math.random() * destinations.length)],
+                    destination: destination,
                     arrivalMessage: generateSubwayArrivalMessage(minutesUntil),
                     arrivalCode: minutesUntil <= 3 ? '0' : '1',
                     currentStation: '전역 출발',
                     timestamp: new Date().toISOString()
-                });
+                };
                 
-                console.log(`🚇 지하철 생성: ${trains[i].line} (${minutesUntil}분)`);
+                trains.push(train);
+                console.log(`🚇 지하철 생성: ${line} ${destination}행 (${minutesUntil}분)`);
             }
             
             return trains;
