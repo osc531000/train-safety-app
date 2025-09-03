@@ -496,7 +496,7 @@
             </div>
 
             <div id="nearby-stations" class="nearby-stations" style="display:none;">
-                <h4>📍 근처 지하철역</h4>
+                <h4>🔍 근처 지하철역</h4>
                 <div id="stations-list"></div>
             </div>
         </div>
@@ -687,7 +687,7 @@
             {name: '서울역', lat: 37.5547, lng: 126.9706, lines: ['1호선', '4호선', 'KTX'], type: 'both'},
             {name: '이촌', lat: 37.5342, lng: 126.9675, lines: ['4호선'], type: 'subway'},
             {name: '동작', lat: 37.5020, lng: 126.9788, lines: ['4호선'], type: 'subway'},
-            {name: '총신대입구', lat: 37.4862, lng: 126.9816, lines: ['4호선'], type: 'subway'},
+            {name: '이수', lat: 37.4862, lng: 126.9816, lines: ['4호선'], type: 'subway'},
             
             // === 5호선 주요역 ===
             {name: '김포공항', lat: 37.5588, lng: 126.8014, lines: ['5호선', '9호선', '공항철도'], type: 'subway'},
@@ -887,10 +887,19 @@
             }
         }
 
-        function updateDebugInfo(info) {
+        function updateDebugInfo(info, extraInfo = '') {
             const debugDiv = document.getElementById('gps-debug');
             const debugInfo = document.getElementById('debug-info');
-            debugInfo.textContent = info;
+            const timestamp = new Date().toLocaleTimeString();
+            
+            debugInfo.innerHTML = `
+                <div style="margin-bottom: 5px;"><strong>🔍 ${timestamp}</strong></div>
+                <div>${info}</div>
+                ${extraInfo ? `<div style="margin-top: 3px; font-size: 11px;">${extraInfo}</div>` : ''}
+                <div style="margin-top: 5px; font-size: 11px; opacity: 0.8;">
+                    💡 감지 반경: 8km | 확률: 95-98% | 노선: 10개
+                </div>
+            `;
             debugDiv.style.display = 'block';
         }
 
@@ -927,7 +936,7 @@
             document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
             
-            // 콘텐츠 섹션 변경
+            // 컨텐츠 섹션 변경
             document.querySelectorAll('.content-section').forEach(section => {
                 section.classList.remove('active');
             });
@@ -1087,7 +1096,7 @@
                 distance: calculateDistance(position.lat, position.lng, station.lat, station.lng)
             })).sort((a, b) => a.distance - b.distance);
 
-            console.log(`🏢 근처 역 ${nearbyStations.length}개 발견:`);
+            console.log(`🟢 근처 역 ${nearbyStations.length}개 발견:`);
             nearbyStations.slice(0, 10).forEach(station => {
                 console.log(`   ${station.type === 'subway' ? '🚇' : station.type === 'korail' ? '🚄' : '🚆'} ${station.name}: ${Math.round(station.distance)}m`);
             });
@@ -1108,14 +1117,6 @@
             } else {
                 updateDebugInfo('근처에 역이 없습니다 (5km 반경)');
             }
-        }
-
-        function getRandomDepartureStation() {
-            const stations = [
-                '서울', '대전', '대구', '부산', '광주', '용산', '청량리', '수원', '인천',
-                '광양', '포항', '익산', '조치원', '제천', '영주', '안동' // 화물기차 주요 출발지 추가
-            ];
-            return stations[Math.floor(Math.random() * stations.length)];
         }
 
         function displayNearbyStations(stations) {
@@ -1142,22 +1143,132 @@
             nearbyStationsDiv.style.display = 'block';
         }
 
-        // 디버그 패널 확장
-        function updateDebugInfo(info, extraInfo = '') {
-            const debugDiv = document.getElementById('gps-debug');
-            const debugInfo = document.getElementById('debug-info');
-            const timestamp = new Date().toLocaleTimeString();
-            
-            debugInfo.innerHTML = `
-                <div style="margin-bottom: 5px;"><strong>📍 ${timestamp}</strong></div>
-                <div>${info}</div>
-                ${extraInfo ? `<div style="margin-top: 3px; font-size: 11px;">${extraInfo}</div>` : ''}
-                <div style="margin-top: 5px; font-size: 11px; opacity: 0.8;">
-                    💡 감지 반경: 8km | 확률: 95-98% | 노선: 10개
-                </div>
-            `;
-            debugDiv.style.display = 'block';
-        }
+        // 주요 철도 노선과 구간 정보 (대폭 확장)
+        const RAILWAY_LINES = {
+            'KTX_경부선': {
+                name: 'KTX 경부선',
+                stations: [
+                    {name: '서울역', lat: 37.5547, lng: 126.9706, code: 'NAT010000'},
+                    {name: '광명역', lat: 37.4161, lng: 126.8845, code: 'NAT010300'},
+                    {name: '천안아산역', lat: 36.7947, lng: 127.1044, code: 'NAT031700'},
+                    {name: '대전역', lat: 36.3315, lng: 127.4344, code: 'DAE050000'},
+                    {name: '김천구미역', lat: 36.1203, lng: 128.3447, code: 'NAT033100'},
+                    {name: '동대구역', lat: 35.8790, lng: 128.6286, code: 'DGU050000'},
+                    {name: '부산역', lat: 35.1155, lng: 129.0422, code: 'PUS050000'}
+                ],
+                intervals: [19, 25, 30, 45, 20, 55]
+            },
+            'KTX_호남선': {
+                name: 'KTX 호남선', 
+                stations: [
+                    {name: '용산역', lat: 37.5297, lng: 126.9645, code: 'NAT010900'},
+                    {name: '광명역', lat: 37.4161, lng: 126.8845, code: 'NAT010300'},
+                    {name: '천안아산역', lat: 36.7947, lng: 127.1044, code: 'NAT031700'},
+                    {name: '오송역', lat: 36.6131, lng: 127.2950, code: 'NAT032900'},
+                    {name: '광주송정역', lat: 35.1401, lng: 126.7935, code: 'GWJ050000'},
+                    {name: '목포역', lat: 34.7947, lng: 126.3849, code: 'MOP050000'}
+                ],
+                intervals: [30, 25, 15, 85, 35]
+            },
+            '경부선_일반': {
+                name: '경부선 (새마을/무궁화)',
+                stations: [
+                    {name: '서울역', lat: 37.5547, lng: 126.9706, code: 'NAT010000'},
+                    {name: '영등포역', lat: 37.5150, lng: 126.9076, code: 'NAT010700'},
+                    {name: '안양역', lat: 37.4019, lng: 126.9227, code: 'NAT010800'},
+                    {name: '수원역', lat: 37.2663, lng: 127.0011, code: 'NAT031300'},
+                    {name: '평택역', lat: 36.9912, lng: 127.0845, code: 'NAT031600'},
+                    {name: '천안역', lat: 36.8101, lng: 127.1436, code: 'NAT031800'},
+                    {name: '대전역', lat: 36.3315, lng: 127.4344, code: 'DAE050000'}
+                ],
+                intervals: [8, 12, 15, 20, 25, 45]
+            },
+            '경인선': {
+                name: '경인선 (전철)',
+                stations: [
+                    {name: '서울역', lat: 37.5547, lng: 126.9706, code: 'NAT010000'},
+                    {name: '영등포역', lat: 37.5150, lng: 126.9076, code: 'NAT010700'},
+                    {name: '구로역', lat: 37.5033, lng: 126.8817, code: 'NAT010600'},
+                    {name: '부천역', lat: 37.4846, lng: 126.7830, code: 'NAT020100'},
+                    {name: '인천역', lat: 37.4436, lng: 126.6434, code: 'NAT020000'}
+                ],
+                intervals: [12, 8, 15, 20]
+            },
+            '중앙선': {
+                name: '중앙선',
+                stations: [
+                    {name: '청량리역', lat: 37.5806, lng: 127.0472, code: 'NAT014100'},
+                    {name: '망우역', lat: 37.5992, lng: 127.0918, code: 'NAT014200'},
+                    {name: '덕소역', lat: 37.6087, lng: 127.1976, code: 'NAT014400'},
+                    {name: '양평역', lat: 37.4919, lng: 127.4873, code: 'NAT014800'},
+                    {name: '원주역', lat: 37.3422, lng: 127.9473, code: 'NAT015200'},
+                    {name: '제천역', lat: 37.1326, lng: 128.1906, code: 'NAT015600'}
+                ],
+                intervals: [15, 20, 35, 45, 50]
+            },
+            '경의선': {
+                name: '경의선',
+                stations: [
+                    {name: '서울역', lat: 37.5547, lng: 126.9706, code: 'NAT010000'},
+                    {name: '공덕역', lat: 37.5443, lng: 126.9490, code: 'NAT010950'},
+                    {name: '홍대입구역', lat: 37.5574, lng: 126.9233, code: 'NAT011000'},
+                    {name: '일산역', lat: 37.6588, lng: 126.7733, code: 'NAT011200'},
+                    {name: '파주역', lat: 37.7608, lng: 126.7794, code: 'NAT011400'}
+                ],
+                intervals: [8, 10, 25, 15]
+            },
+            '분당선': {
+                name: '분당선',
+                stations: [
+                    {name: '왕십리역', lat: 37.5617, lng: 127.0378, code: 'NAT013800'},
+                    {name: '서현역', lat: 37.3856, lng: 127.1232, code: 'NAT013900'},
+                    {name: '분당역', lat: 37.3595, lng: 127.1072, code: 'NAT014000'},
+                    {name: '수원역', lat: 37.2663, lng: 127.0011, code: 'NAT031300'}
+                ],
+                intervals: [25, 8, 12]
+            },
+            '공항철도': {
+                name: '공항철도',
+                stations: [
+                    {name: '서울역', lat: 37.5547, lng: 126.9706, code: 'NAT010000'},
+                    {name: '홍대입구역', lat: 37.5574, lng: 126.9233, code: 'NAT011000'},
+                    {name: '김포공항역', lat: 37.5588, lng: 126.8014, code: 'NAT012000'},
+                    {name: '인천국제공항역', lat: 37.4439, lng: 126.4516, code: 'NAT012100'}
+                ],
+                intervals: [12, 15, 35]
+            },
+            '신림선': {
+                name: '신림선 (경전철)',
+                stations: [
+                    {name: '관악산역', lat: 37.4656, lng: 126.9515, code: 'SIN010000'},
+                    {name: '서울대벤처타운역', lat: 37.4699, lng: 126.9472, code: 'SIN010100'},
+                    {name: '호암사거리역', lat: 37.4741, lng: 126.9433, code: 'SIN010200'},
+                    {name: '서림역', lat: 37.4791, lng: 126.9384, code: 'SIN010300'},
+                    {name: '산기대역', lat: 37.4823, lng: 126.9349, code: 'SIN010400'},
+                    {name: '신림역', lat: 37.4844, lng: 126.9295, code: 'SIN010500'}
+                ],
+                intervals: [3, 4, 4, 3, 2]
+            },
+            '우이신설선': {
+                name: '우이신설선 (경전철)',
+                stations: [
+                    {name: '북한산우이역', lat: 37.6634, lng: 127.0126, code: 'UI010000'},
+                    {name: '솔밭공원역', lat: 37.6593, lng: 127.0099, code: 'UI010100'},
+                    {name: '4.19민주묘지역', lat: 37.6532, lng: 127.0095, code: 'UI010200'},
+                    {name: '가오리역', lat: 37.6460, lng: 127.0115, code: 'UI010300'},
+                    {name: '화계역', lat: 37.6394, lng: 127.0153, code: 'UI010400'},
+                    {name: '삼양역', lat: 37.6307, lng: 127.0196, code: 'UI010500'},
+                    {name: '삼양사거리역', lat: 37.6265, lng: 127.0218, code: 'UI010600'},
+                    {name: '솔샘역', lat: 37.6195, lng: 127.0264, code: 'UI010700'},
+                    {name: '북한산보국문역', lat: 37.6138, lng: 127.0307, code: 'UI010800'},
+                    {name: '정릉역', lat: 37.6061, lng: 127.0366, code: 'UI010900'},
+                    {name: '성신여대입구역', lat: 37.5926, lng: 127.0177, code: 'UI011000'},
+                    {name: '보문역', lat: 37.5843, lng: 127.0172, code: 'UI011100'},
+                    {name: '신설동역', lat: 37.5751, lng: 127.0255, code: 'UI011200'}
+                ],
+                intervals: [3, 4, 3, 4, 5, 2, 3, 3, 4, 6, 4, 3]
+            }
+        };
 
         function startGPSMonitoring() {
             if (!currentPosition) {
@@ -1182,7 +1293,7 @@
             checkNearbyTrains(currentPosition);
             
             // 갱신 주기 표시
-            updateMonitoringInfo(0, updateInterval, Object.keys(RAILWAY_LINES).length); // 10개 노선
+            updateMonitoringInfo(0, updateInterval, Object.keys(RAILWAY_LINES).length);
         }
 
         function stopGPSMonitoring() {
@@ -1302,7 +1413,7 @@
                         
                         dangerousTrains = [...dangerousTrains, ...nearTrains];
                     } catch (error) {
-                        console.error(`❌ ${station.name} 데이터 조회 오류:`, error);
+                        console.error(`⌛ ${station.name} 데이터 조회 오류:`, error);
                     }
                 }
 
@@ -1314,964 +1425,4 @@
                 const freightTrainCount = allTrainData.filter(t => t.type === 'korail' && t.isFreight).length;
                 console.log(`🚇 지하철: ${subwayCount}개, 🚄 여객열차: ${passengerTrainCount}개, 🚛 화물열차: ${freightTrainCount}개`);
 
-                // 경고 처리 - 지속적으로 표시
-                if (dangerousTrains.length > 0) {
-                    // 새로운 위험 열차 발견
-                    if (!currentWarningState.isActive) {
-                        currentWarningState.isActive = true;
-                        currentWarningState.warningStartTime = new Date();
-                        triggerAlarm(); // 처음 경고 시에만 알람
-                    }
-                    
-                    currentWarningState.lastWarningTrain = dangerousTrains[0];
-                    currentWarningState.lastUpdateTime = new Date();
-                    showWarning(dangerousTrains);
-                    
-                } else {
-                    // 위험 열차가 없음
-                    if (currentWarningState.isActive) {
-                        // 이전에 경고가 있었으면 해제
-                        hideWarning();
-                        currentWarningState.isActive = false;
-                        currentWarningState.lastWarningTrain = null;
-                        currentWarningState.warningStartTime = null;
-                        stopAlarm();
-                    }
-                }
-
-                // 열차 정보 표시
-                displayTrainInfo(allTrainData);
-                
-                // UI 업데이트 - 감지된 철도 노선 수 포함
-                const detectedRailwayLines = Object.keys(RAILWAY_LINES).length; // 전체 노선 수 (이제 10개)
-                updateMonitoringInfo(stationsInRange.length, null, detectedRailwayLines);
-                
-            } catch (error) {
-                console.error('모니터링 에러:', error);
-                showError('모니터링 중 오류가 발생했습니다: ' + error.message);
-            }
-        }
-
-        async function fetchSubwayRealtime(stationName) {
-            try {
-                // 실제 서울시 지하철 실시간 도착정보 API 호출
-                const url = `http://swopenAPI.seoul.go.kr/api/subway/${API_KEYS.subway}/json/realtimeStationArrival/0/10/${encodeURIComponent(stationName)}`;
-                
-                const response = await fetch(url, {
-                    method: 'GET',
-                    mode: 'cors'
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`API 응답 오류: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                
-                if (data.errorMessage) {
-                    throw new Error(data.errorMessage.message || 'API 오류');
-                }
-                
-                const arrivals = data.realtimeArrivalList || [];
-                
-                return arrivals.map(arrival => ({
-                    type: 'subway',
-                    station: stationName,
-                    line: arrival.subwayId || arrival.trainLineNm,
-                    direction: arrival.updnLine,
-                    destination: arrival.bstatnNm,
-                    arrivalMessage: arrival.arvlMsg2 || arrival.arvlMsg3,
-                    arrivalCode: arrival.arvlCd,
-                    currentStation: arrival.arvlMsg3,
-                    timestamp: arrival.recptnDt
-                }));
-                
-            } catch (error) {
-                console.error(`${stationName} 지하철 정보 조회 실패:`, error);
-                // 모의 데이터 반환 (개발 시)
-                return generateMockSubwayData(stationName);
-            }
-        }
-
-        // 주요 철도 노선과 구간 정보 (대폭 확장)
-        const RAILWAY_LINES = {
-            'KTX_경부선': {
-                name: 'KTX 경부선',
-                stations: [
-                    {name: '서울역', lat: 37.5547, lng: 126.9706, code: 'NAT010000'},
-                    {name: '광명역', lat: 37.4161, lng: 126.8845, code: 'NAT010300'},
-                    {name: '천안아산역', lat: 36.7947, lng: 127.1044, code: 'NAT031700'},
-                    {name: '대전역', lat: 36.3315, lng: 127.4344, code: 'DAE050000'},
-                    {name: '김천구미역', lat: 36.1203, lng: 128.3447, code: 'NAT033100'},
-                    {name: '동대구역', lat: 35.8790, lng: 128.6286, code: 'DGU050000'},
-                    {name: '부산역', lat: 35.1155, lng: 129.0422, code: 'PUS050000'}
-                ],
-                intervals: [19, 25, 30, 45, 20, 55]
-            },
-            'KTX_호남선': {
-                name: 'KTX 호남선', 
-                stations: [
-                    {name: '용산역', lat: 37.5297, lng: 126.9645, code: 'NAT010900'},
-                    {name: '광명역', lat: 37.4161, lng: 126.8845, code: 'NAT010300'},
-                    {name: '천안아산역', lat: 36.7947, lng: 127.1044, code: 'NAT031700'},
-                    {name: '오송역', lat: 36.6131, lng: 127.2950, code: 'NAT032900'},
-                    {name: '광주송정역', lat: 35.1401, lng: 126.7935, code: 'GWJ050000'},
-                    {name: '목포역', lat: 34.7947, lng: 126.3849, code: 'MOP050000'}
-                ],
-                intervals: [30, 25, 15, 85, 35]
-            },
-            '경부선_일반': {
-                name: '경부선(새마을/무궁화)',
-                stations: [
-                    {name: '서울역', lat: 37.5547, lng: 126.9706, code: 'NAT010000'},
-                    {name: '영등포역', lat: 37.5150, lng: 126.9076, code: 'NAT010700'},
-                    {name: '안양역', lat: 37.4019, lng: 126.9227, code: 'NAT010800'},
-                    {name: '수원역', lat: 37.2663, lng: 127.0011, code: 'NAT031300'},
-                    {name: '평택역', lat: 36.9912, lng: 127.0845, code: 'NAT031600'},
-                    {name: '천안역', lat: 36.8101, lng: 127.1436, code: 'NAT031800'},
-                    {name: '대전역', lat: 36.3315, lng: 127.4344, code: 'DAE050000'}
-                ],
-                intervals: [8, 12, 15, 20, 25, 45]
-            },
-            '경인선': {
-                name: '경인선(전철)',
-                stations: [
-                    {name: '서울역', lat: 37.5547, lng: 126.9706, code: 'NAT010000'},
-                    {name: '영등포역', lat: 37.5150, lng: 126.9076, code: 'NAT010700'},
-                    {name: '구로역', lat: 37.5033, lng: 126.8817, code: 'NAT010600'},
-                    {name: '부천역', lat: 37.4846, lng: 126.7830, code: 'NAT020100'},
-                    {name: '인천역', lat: 37.4436, lng: 126.6434, code: 'NAT020000'}
-                ],
-                intervals: [12, 8, 15, 20]
-            },
-            '중앙선': {
-                name: '중앙선',
-                stations: [
-                    {name: '청량리역', lat: 37.5806, lng: 127.0472, code: 'NAT014100'},
-                    {name: '망우역', lat: 37.5992, lng: 127.0918, code: 'NAT014200'},
-                    {name: '덕소역', lat: 37.6087, lng: 127.1976, code: 'NAT014400'},
-                    {name: '양평역', lat: 37.4919, lng: 127.4873, code: 'NAT014800'},
-                    {name: '원주역', lat: 37.3422, lng: 127.9473, code: 'NAT015200'},
-                    {name: '제천역', lat: 37.1326, lng: 128.1906, code: 'NAT015600'}
-                ],
-                intervals: [15, 20, 35, 45, 50]
-            },
-            '경의선': {
-                name: '경의선',
-                stations: [
-                    {name: '서울역', lat: 37.5547, lng: 126.9706, code: 'NAT010000'},
-                    {name: '공덕역', lat: 37.5443, lng: 126.9490, code: 'NAT010950'},
-                    {name: '홍대입구역', lat: 37.5574, lng: 126.9233, code: 'NAT011000'},
-                    {name: '일산역', lat: 37.6588, lng: 126.7733, code: 'NAT011200'},
-                    {name: '파주역', lat: 37.7608, lng: 126.7794, code: 'NAT011400'}
-                ],
-                intervals: [8, 10, 25, 15]
-            },
-            '분당선': {
-                name: '분당선',
-                stations: [
-                    {name: '왕십리역', lat: 37.5617, lng: 127.0378, code: 'NAT013800'},
-                    {name: '서현역', lat: 37.3856, lng: 127.1232, code: 'NAT013900'},
-                    {name: '분당역', lat: 37.3595, lng: 127.1072, code: 'NAT014000'},
-                    {name: '수원역', lat: 37.2663, lng: 127.0011, code: 'NAT031300'}
-                ],
-                intervals: [25, 8, 12]
-            },
-            '공항철도': {
-                name: '공항철도',
-                stations: [
-                    {name: '서울역', lat: 37.5547, lng: 126.9706, code: 'NAT010000'},
-                    {name: '홍대입구역', lat: 37.5574, lng: 126.9233, code: 'NAT011000'},
-                    {name: '김포공항역', lat: 37.5588, lng: 126.8014, code: 'NAT012000'},
-                    {name: '인천국제공항역', lat: 37.4439, lng: 126.4516, code: 'NAT012100'}
-                ],
-                intervals: [12, 15, 35]
-            },
-            '신림선': {
-                name: '신림선(경전철)',
-                stations: [
-                    {name: '관악산역', lat: 37.4656, lng: 126.9515, code: 'SIN010000'},
-                    {name: '서울대벤처타운역', lat: 37.4699, lng: 126.9472, code: 'SIN010100'},
-                    {name: '호암사거리역', lat: 37.4741, lng: 126.9433, code: 'SIN010200'},
-                    {name: '서림역', lat: 37.4791, lng: 126.9384, code: 'SIN010300'},
-                    {name: '산기대역', lat: 37.4823, lng: 126.9349, code: 'SIN010400'},
-                    {name: '신림역', lat: 37.4844, lng: 126.9295, code: 'SIN010500'}
-                ],
-                intervals: [3, 4, 4, 3, 2]
-            },
-            '우이신설선': {
-                name: '우이신설선(경전철)',
-                stations: [
-                    {name: '북한산우이역', lat: 37.6634, lng: 127.0126, code: 'UI010000'},
-                    {name: '솔밭공원역', lat: 37.6593, lng: 127.0099, code: 'UI010100'},
-                    {name: '4.19민주묘지역', lat: 37.6532, lng: 127.0095, code: 'UI010200'},
-                    {name: '가오리역', lat: 37.6460, lng: 127.0115, code: 'UI010300'},
-                    {name: '화계역', lat: 37.6394, lng: 127.0153, code: 'UI010400'},
-                    {name: '삼양역', lat: 37.6307, lng: 127.0196, code: 'UI010500'},
-                    {name: '삼양사거리역', lat: 37.6265, lng: 127.0218, code: 'UI010600'},
-                    {name: '솔샘역', lat: 37.6195, lng: 127.0264, code: 'UI010700'},
-                    {name: '북한산보국문역', lat: 37.6138, lng: 127.0307, code: 'UI010800'},
-                    {name: '정릉역', lat: 37.6061, lng: 127.0366, code: 'UI010900'},
-                    {name: '성신여대입구역', lat: 37.5926, lng: 127.0177, code: 'UI011000'},
-                    {name: '보문역', lat: 37.5843, lng: 127.0172, code: 'UI011100'},
-                    {name: '신설동역', lat: 37.5751, lng: 127.0255, code: 'UI011200'}
-                ],
-                intervals: [3, 4, 3, 4, 5, 2, 3, 3, 4, 6, 4, 3]
-            }
-        };
-
-        async function fetchKorailData(stationName, position) {
-            try {
-                // 1단계: 내 위치 근처를 지나가는 철도 노선 찾기
-                const nearbyLines = findNearbyRailwayLines(position);
-                
-                if (nearbyLines.length === 0) {
-                    return await generateEnhancedKorailData(stationName, position);
-                }
-
-                const allPassingTrains = [];
-                
-                // 2단계: 각 노선별로 지나가는 열차 조회
-                for (const line of nearbyLines) {
-                    try {
-                        const passingTrains = await getTrainsPassingThroughPosition(line, position);
-                        allPassingTrains.push(...passingTrains);
-                    } catch (error) {
-                        console.error(`${line.name} 노선 조회 실패:`, error);
-                    }
-                }
-                
-                return allPassingTrains;
-                
-            } catch (error) {
-                console.error(`코레일 정보 조회 실패:`, error);
-                return await generateEnhancedKorailData(stationName, position);
-            }
-        }
-
-        function findNearbyRailwayLines(position) {
-            const nearbyLines = [];
-            const maxDistance = 8000; // 2km -> 8km로 확대
-            
-            Object.values(RAILWAY_LINES).forEach(line => {
-                // 각 노선의 역들을 체크해서 가까운 노선 찾기
-                for (let i = 0; i < line.stations.length - 1; i++) {
-                    const station1 = line.stations[i];
-                    const station2 = line.stations[i + 1];
-                    
-                    // 두 역 사이 구간에서 내 위치까지의 최단거리 계산
-                    const distanceToLine = calculateDistanceToLineSegment(
-                        position, 
-                        {lat: station1.lat, lng: station1.lng},
-                        {lat: station2.lat, lng: station2.lng}
-                    );
-                    
-                    if (distanceToLine <= maxDistance) {
-                        nearbyLines.push({
-                            ...line,
-                            nearestSegment: {from: station1, to: station2, index: i},
-                            distanceToLine: distanceToLine
-                        });
-                        
-                        // 디버그 정보 출력
-                                console.log(`📍 근처 노선 발견: ${line.name}`);
-                        console.log(`   구간: ${station1.name} → ${station2.name}`);
-                        console.log(`   거리: ${Math.round(distanceToLine)}m`);
-                        
-                        break; // 이 노선에서 가까운 구간 하나 찾으면 충분
-                    }
-                }
-            });
-            
-            // 디버그 정보
-            updateDebugInfo(`감지된 철도 노선: ${nearbyLines.length}개`);
-            
-            return nearbyLines.sort((a, b) => a.distanceToLine - b.distanceToLine);
-        }
-
-        async function getTrainsPassingThroughPosition(line, position) {
-            const currentTime = new Date();
-            const passingTrains = [];
-            
-            // 해당 노선의 모든 역에서 출발/도착 정보 조회
-            for (const station of line.stations) {
-                try {
-                    const stationTrains = await queryStationSchedule(station.code, line.name);
-                    
-                    stationTrains.forEach(train => {
-                        // 열차가 내 위치를 지나가는 시간 예측
-                        const passingTime = estimatePassingTime(train, line, position);
-                        const timeDiff = (passingTime - currentTime) / (1000 * 60); // 분 단위
-                        
-                        // 15분 전후로 내 위치를 지나가는 열차만 포함
-                        if (timeDiff >= -5 && timeDiff <= 15) {
-                            passingTrains.push({
-                                type: 'korail',
-                                station: station.name,
-                                line: getTrainTypeName(train.trainType) || line.name,
-                                trainNo: train.trainNo,
-                                direction: train.direction,
-                                destination: train.destination,
-                                departureStation: train.departureStation,
-                                arrivalMessage: generatePassingMessage(timeDiff),
-                                arrivalCode: timeDiff <= 3 ? '0' : '1',
-                                passingTime: passingTime.toTimeString().substring(0, 5),
-                                estimatedLocation: estimateCurrentLocation(train, line, currentTime),
-                                timestamp: new Date().toISOString()
-                            });
-                        }
-                    });
-                } catch (error) {
-                    console.error(`${station.name} 시간표 조회 실패:`, error);
-                }
-            }
-            
-            // 중복 제거 및 시간순 정렬
-            return removeDuplicateTrains(passingTrains)
-                .sort((a, b) => new Date(`1970/01/01 ${a.passingTime}`) - new Date(`1970/01/01 ${b.passingTime}`))
-                .slice(0, 5); // 상위 5개만
-        }
-
-        function calculateDistanceToLineSegment(point, lineStart, lineEnd) {
-            // 점과 선분 사이의 최단거리 계산 (복잡한 기하학 계산)
-            const A = point.lat - lineStart.lat;
-            const B = point.lng - lineStart.lng;
-            const C = lineEnd.lat - lineStart.lat;
-            const D = lineEnd.lng - lineStart.lng;
-
-            const dot = A * C + B * D;
-            const lenSq = C * C + D * D;
-            let param = -1;
-            
-            if (lenSq !== 0) {
-                param = dot / lenSq;
-            }
-
-            let xx, yy;
-
-            if (param < 0) {
-                xx = lineStart.lat;
-                yy = lineStart.lng;
-            } else if (param > 1) {
-                xx = lineEnd.lat;
-                yy = lineEnd.lng;
-            } else {
-                xx = lineStart.lat + param * C;
-                yy = lineStart.lng + param * D;
-            }
-
-            return calculateDistance(point.lat, point.lng, xx, yy);
-        }
-
-        function estimatePassingTime(train, line, position) {
-            // 열차의 시간표를 바탕으로 내 위치 통과 시간 추정
-            const departureTime = new Date(`1970/01/01 ${train.departureTime}`);
-            const currentDate = new Date();
-            
-            // 오늘 날짜로 시간 조정
-            departureTime.setFullYear(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
-            
-            // 출발역에서 내 위치까지의 예상 소요시간 계산
-            const travelTimeToPosition = estimateTravelTime(train.departureStation, position, line);
-            
-            const passingTime = new Date(departureTime.getTime() + travelTimeToPosition * 60000);
-            return passingTime;
-        }
-
-        function estimateTravelTime(departureStation, position, line) {
-            // 출발역에서 내 위치까지의 대략적인 소요시간 추정
-            let travelTime = 0;
-            let found = false;
-            
-            for (let i = 0; i < line.stations.length - 1; i++) {
-                if (line.stations[i].name === departureStation) {
-                    found = true;
-                }
-                
-                if (found) {
-                    travelTime += line.intervals[i] || 30; // 기본 30분
-                    
-                    // 내 위치가 이 구간에 있는지 확인
-                    const distanceToSegment = calculateDistanceToLineSegment(
-                        position,
-                        {lat: line.stations[i].lat, lng: line.stations[i].lng},
-                        {lat: line.stations[i + 1].lat, lng: line.stations[i + 1].lng}
-                    );
-                    
-                    if (distanceToSegment <= 2000) { // 2km 이내면 이 구간에서 통과
-                        break;
-                    }
-                }
-            }
-            
-            return travelTime;
-        }
-
-        function generatePassingMessage(timeDiff) {
-            if (timeDiff <= -2) {
-                return '이미 통과';
-            } else if (timeDiff <= 0) {
-                return '통과 중';
-            } else if (timeDiff <= 3) {
-                return `${Math.round(timeDiff)}분 후 통과`;
-            } else if (timeDiff <= 10) {
-                return `${Math.round(timeDiff)}분 후 통과`;
-            } else {
-                return `${Math.round(timeDiff)}분 후 통과`;
-            }
-        }
-
-        function estimateCurrentLocation(train, line, currentTime) {
-            // 현재 열차가 어느 구간에 있는지 대략적으로 추정
-            const departureTime = new Date(`1970/01/01 ${train.departureTime}`);
-            const currentDate = new Date();
-            departureTime.setFullYear(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
-            
-            const elapsedMinutes = (currentTime - departureTime) / (1000 * 60);
-            
-            if (elapsedMinutes < 0) {
-                return `${train.departureStation} 출발 대기 중`;
-            }
-            
-            let cumulativeTime = 0;
-            const departureIndex = line.stations.findIndex(s => s.name === train.departureStation);
-            
-            for (let i = departureIndex; i < line.stations.length - 1; i++) {
-                cumulativeTime += line.intervals[i] || 30;
-                
-                if (elapsedMinutes <= cumulativeTime) {
-                    return `${line.stations[i].name} → ${line.stations[i + 1].name} 구간`;
-                }
-            }
-            
-            return `${train.destination} 도착`;
-        }
-
-        async function queryStationSchedule(stationCode, lineName) {
-            // 실제 API 호출 대신 현실적인 시간표 기반 모의 데이터
-            return generateRealisticSchedule(stationCode, lineName);
-        }
-
-        function generateRealisticSchedule(stationCode, lineName) {
-            const currentTime = new Date();
-            const hour = currentTime.getHours();
-            const trains = [];
-            
-            // 시간대별 열차 운행 패턴
-            let trainCount = 0;
-            if (lineName.includes('KTX')) {
-                trainCount = hour >= 6 && hour <= 22 ? Math.floor(Math.random() * 3) + 1 : 0;
-            } else {
-                trainCount = hour >= 5 && hour <= 23 ? Math.floor(Math.random() * 4) + 1 : 0;
-            }
-            
-            for (let i = 0; i < trainCount; i++) {
-                const departureMinutes = Math.floor(Math.random() * 120) + 10; // 10-130분 후
-                const departureTime = new Date(currentTime.getTime() + departureMinutes * 60000);
-                
-                trains.push({
-                    trainNo: generateRealisticTrainNumber(lineName),
-                    trainType: lineName.includes('KTX') ? '01' : '03',
-                    departureTime: departureTime.toTimeString().substring(0, 5),
-                    departureStation: getStationNameFromCode(stationCode),
-                    destination: getRandomDestination(lineName),
-                    direction: Math.random() > 0.5 ? '상행' : '하행'
-                });
-            }
-            
-            return trains;
-        }
-
-        function getStationNameFromCode(code) {
-            const codeMap = {
-                'NAT010000': '서울역',
-                'NAT010900': '용산역', 
-                'DAE050000': '대전역',
-                'DGU050000': '동대구역',
-                'PUS050000': '부산역',
-                'GWJ050000': '광주송정역',
-                'MOP050000': '목포역'
-            };
-            return codeMap[code] || '역';
-        }
-
-        function getRandomDestination(lineName) {
-            if (lineName.includes('경부')) {
-                return ['부산', '대구', '대전', '서울'][Math.floor(Math.random() * 4)];
-            } else if (lineName.includes('호남')) {
-                return ['목포', '광주', '용산', '서울'][Math.floor(Math.random() * 4)];
-            }
-            return '목적지';
-        }
-
-        function removeDuplicateTrains(trains) {
-            const seen = new Set();
-            return trains.filter(train => {
-                const key = `${train.trainNo}-${train.passingTime}`;
-                if (seen.has(key)) {
-                    return false;
-                }
-                seen.add(key);
-                return true;
-            });
-        }
-
-        function generateMockSubwayData(stationName) {
-            // 개발용 지하철 모의 데이터 (거의 항상 생성)
-            const hour = new Date().getHours();
-            let subwayProbability = 0.95; // 기본 95%로 대폭 상승!
-            
-            if (hour >= 7 && hour <= 9) subwayProbability = 0.98; // 출근시간 98%
-            if (hour >= 18 && hour <= 20) subwayProbability = 0.98; // 퇴근시간 98%
-            if (hour >= 22 || hour <= 5) subwayProbability = 0.8; // 심야도 80%
-            
-            console.log(`🚇 지하철 모의데이터 확률: ${Math.round(subwayProbability * 100)}% (${stationName})`);
-            
-            if (Math.random() > subwayProbability) {
-                console.log(`🚇 ${stationName}: 확률적으로 지하철 없음`);
-                return [];
-            }
-            
-            const numTrains = Math.floor(Math.random() * 4) + 2; // 2-5대로 증가!
-            const trains = [];
-            
-            // 실제 서울 지하철 노선
-            const realSubwayLines = [
-                '1호선', '2호선', '3호선', '4호선', '5호선', 
-                '6호선', '7호선', '8호선', '9호선', 
-                '분당선', '신분당선', '경의중앙선', '공항철도',
-                '신림선', '우이신설선'
-            ];
-            
-            const destinations = [
-                '강남', '신도림', '사당', '잠실', '홍대입구', '신촌', 
-                '종로3가', '명동', '이대', '건대입구', '왕십리', '교대',
-                '고속터미널', '김포공항', '인천', '수원', '성수', '합정',
-                '신림', '관악산', '북한산우이', '신설동', '보문', '정릉'
-            ];
-            
-            for (let i = 0; i < numTrains; i++) {
-                const line = realSubwayLines[Math.floor(Math.random() * realSubwayLines.length)];
-                const destination = destinations[Math.floor(Math.random() * destinations.length)];
-                const minutesUntil = Math.floor(Math.random() * 12) + 1; // 1-12분
-                
-                const train = {
-                    type: 'subway',
-                    station: stationName,
-                    line: line,
-                    direction: Math.random() > 0.5 ? '내선순환' : '외선순환',
-                    destination: destination,
-                    arrivalMessage: generateSubwayArrivalMessage(minutesUntil),
-                    arrivalCode: minutesUntil <= 3 ? '0' : '1',
-                    currentStation: '전역 출발',
-                    timestamp: new Date().toISOString()
-                };
-                
-                trains.push(train);
-                console.log(`🚇 지하철 생성: ${line} ${destination}행 (${minutesUntil}분)`);
-            }
-            
-            return trains;
-        }
-
-        function generateSubwayArrivalMessage(minutes) {
-            if (minutes <= 1) return '곧 도착';
-            if (minutes <= 2) return '진입중';
-            if (minutes <= 3) return `${minutes}분 후 도착`;
-            return `${minutes}분 후 도착`;
-        }
-
-        async function generateEnhancedKorailData(stationName, position) {
-            // 실제 시간표 기반 향상된 모의 데이터 (화물기차 포함)
-            const currentTime = new Date();
-            const hour = currentTime.getHours();
-            
-            // 시간대별 열차 운행 빈도 조정 (화물기차는 24시간 운행)
-            let trainProbability = 0.7; // 기본 70%로 증가
-            
-            if (hour >= 6 && hour <= 9) trainProbability = 0.95; // 출근 시간 95%
-            else if (hour >= 17 && hour <= 20) trainProbability = 0.9; // 퇴근 시간 90%
-            else if (hour >= 10 && hour <= 16) trainProbability = 0.8; // 오전/오후 80%
-            else if (hour >= 21 || hour <= 5) trainProbability = 0.6; // 심야 시간 60% (화물기차 많음)
-            
-            // 디버그 정보
-            console.log(`🕐 현재 ${hour}시, 열차 확률: ${Math.round(trainProbability * 100)}%`);
-            
-            if (Math.random() > trainProbability) {
-                console.log(`🚫 확률적으로 열차 없음`);
-                return [];
-            }
-
-            const trainTypes = [
-                { name: 'KTX', destinations: ['부산', '대구', '광주송정', '목포', '강릉'], isFreight: false },
-                { name: '새마을호', destinations: ['부산', '대전', '광주', '목포', '포항'], isFreight: false },
-                { name: '무궁화호', destinations: ['부산', '대전', '대구', '광주', '목포', '춘천', '강릉'], isFreight: false },
-                { name: 'ITX-새마을', destinations: ['부산', '대전', '마산'], isFreight: false },
-                { name: '화물열차', destinations: ['부산', '광양', '포항', '익산', '조치원', '제천'], isFreight: true }
-            ];
-            
-            const trains = [];
-            const numTrains = Math.floor(Math.random() * 5) + 1; // 1-5대로 증가
-            
-            console.log(`🚄 생성할 열차 수: ${numTrains}대`);
-            
-            for (let i = 0; i < numTrains; i++) {
-                const trainType = trainTypes[Math.floor(Math.random() * trainTypes.length)];
-                
-                // 화물열차 확률 조정 (심야 시간에 더 높음)
-                let isFreightTrain = false;
-                if (trainType.isFreight) {
-                    const freightProbability = (hour >= 22 || hour <= 5) ? 0.4 : 0.2;
-                    isFreightTrain = Math.random() < freightProbability;
-                }
-                
-                if (trainType.isFreight && !isFreightTrain) {
-                    // 화물열차가 선택되었지만 확률적으로 제외되면 여객열차로 교체
-                    const passengerTypes = trainTypes.filter(t => !t.isFreight);
-                    const altType = passengerTypes[Math.floor(Math.random() * passengerTypes.length)];
-                    trainType.name = altType.name;
-                    trainType.destinations = altType.destinations;
-                }
-                
-                const destination = trainType.destinations[Math.floor(Math.random() * trainType.destinations.length)];
-                const minutesUntilPassing = trainType.isFreight ? 
-                    Math.floor(Math.random() * 45) + 5 : // 화물: 5-50분 후
-                    Math.floor(Math.random() * 30) + 1; // 여객: 1-30분 후
-                
-                const train = {
-                    type: 'korail',
-                    station: stationName,
-                    line: trainType.name,
-                    trainNo: generateRealisticTrainNumber(trainType.name),
-                    direction: Math.random() > 0.5 ? '상행' : '하행',
-                    destination: destination,
-                    arrivalMessage: generateRealisticArrivalMessage(minutesUntilPassing, trainType.isFreight),
-                    arrivalCode: minutesUntilPassing <= 10 ? '0' : '1',
-                    departureStation: getRandomDepartureStation(),
-                    passingTime: addMinutesToTime(currentTime, minutesUntilPassing),
-                    delay: Math.random() > 0.9 ? Math.floor(Math.random() * 15) + '분 지연' : '정상',
-                    isFreight: trainType.isFreight,
-                    timestamp: new Date().toISOString()
-                };
-                
-                trains.push(train);
-                const freightIcon = trainType.isFreight ? '🚛' : '🚄';
-                console.log(`${freightIcon} 생성된 열차: ${train.line}-${train.trainNo} (${minutesUntilPassing}분 후)`);
-            }
-            
-            return trains;
-        }
-
-        function generateRealisticTrainNumber(trainType) {
-            const prefixes = {
-                'KTX': ['100', '120', '140', '160'],
-                '새마을호': ['1', '3', '5', '7'],
-                '무궁화호': ['80', '90', '120', '140'],
-                'ITX-새마을': ['20', '22', '24'],
-                '화물열차': ['8', '9'] // 화물열차 번호 체계
-            };
-            
-            const prefix = prefixes[trainType] || ['100'];
-            const selectedPrefix = prefix[Math.floor(Math.random() * prefix.length)];
-            const suffix = Math.floor(Math.random() * 99).toString().padStart(2, '0');
-            
-            return selectedPrefix + suffix;
-        }
-
-        function generateRealisticArrivalMessage(minutes, isFreight = false) {
-            const freightPrefix = isFreight ? '화물 ' : '';
-            
-            if (minutes <= 2) {
-                return `${freightPrefix}곧 통과`;
-            } else if (minutes <= 5) {
-                return `${freightPrefix}${minutes}분 후 통과`;
-            } else if (minutes <= 15) {
-                return `${freightPrefix}${minutes}분 후 통과`;
-            } else {
-                const hours = Math.floor(minutes / 60);
-                const remainingMinutes = minutes % 60;
-                if (hours > 0) {
-                    return `${freightPrefix}${hours}시간 ${remainingMinutes}분 후 통과`;
-                } else {
-                    return `${freightPrefix}${minutes}분 후 통과`;
-                }
-            }
-        }
-
-        function addMinutesToTime(baseTime, minutes) {
-            const newTime = new Date(baseTime);
-            newTime.setMinutes(newTime.getMinutes() + minutes);
-            return newTime.toTimeString().substring(0, 5); // HH:MM 형식
-        }
-
-        function displayTrainInfo(trainData) {
-            const trainList = document.getElementById('train-list');
-            const trainItems = document.getElementById('train-items');
-            
-            if (trainData.length === 0) {
-                trainList.style.display = 'none';
-                return;
-            }
-            
-            trainItems.innerHTML = '';
-            
-            // 통과 시간순으로 정렬
-            trainData.sort((a, b) => {
-                if (a.arrivalCode === '0' && b.arrivalCode !== '0') return -1;
-                if (b.arrivalCode === '0' && a.arrivalCode !== '0') return 1;
-                return 0;
-            });
-            
-            trainData.forEach(train => {
-                const trainDiv = document.createElement('div');
-                trainDiv.className = `train-item ${train.type}`;
-                
-                let statusColor = '#4caf50';
-                let typeIcon = train.type === 'subway' ? '🚇' : '🚄';
-                let urgencyClass = '';
-                
-                if (train.arrivalCode === '0' || 
-                    train.arrivalMessage?.includes('진입') || 
-                    train.arrivalMessage?.includes('곧') || 
-                    train.arrivalMessage?.includes('출발 중') ||
-                    train.arrivalMessage?.includes('통과 중')) {
-                    statusColor = '#f44336';
-                    urgencyClass = ' urgent';
-                } else if (train.arrivalMessage?.includes('1분') || 
-                           train.arrivalMessage?.includes('2분') || 
-                           train.arrivalMessage?.includes('3분') || 
-                           train.arrivalMessage?.includes('5분')) {
-                    statusColor = '#ff9800';
-                    urgencyClass = ' warning';
-                }
-                
-                trainDiv.style.borderLeftColor = statusColor;
-                trainDiv.className += urgencyClass;
-                
-                let additionalInfo = '';
-                if (train.type === 'korail') {
-                    const trainIcon = train.isFreight ? '🚛' : '🚄';
-                    additionalInfo = `
-                        <div style="margin-top: 5px; font-size: 12px; color: #666;">
-                            ${trainIcon} 열차번호: ${train.trainNo}
-                            ${train.departureStation ? `<br>🚩 출발: ${train.departureStation}` : ''}
-                            ${train.passingTime ? `<br>🕐 통과예정: ${train.passingTime}` : ''}
-                            ${train.estimatedLocation ? `<br>📍 현재위치: ${train.estimatedLocation}` : ''}
-                            ${train.isFreight ? `<br>⚠️ 화물열차` : ''}
-                        </div>
-                    `;
-                }
-                
-                const destination = train.destination || '목적지';
-                const direction = train.direction || '';
-                
-                trainDiv.innerHTML = `
-                    <div class="train-line">${typeIcon} ${train.line} - ${train.station}</div>
-                    <div class="train-info">
-                        ${direction} | ${destination} 방면<br>
-                        <span style="color:${statusColor};font-weight:bold;">${train.arrivalMessage}</span>
-                        ${additionalInfo}
-                    </div>
-                `;
-                trainItems.appendChild(trainDiv);
-            });
-            
-            trainList.style.display = 'block';
-        }
-
-        function showWarning(trains) {
-            const isGPSMode = document.getElementById('gps-mode').classList.contains('active');
-            const warningElement = isGPSMode ? 
-                document.getElementById('gps-warning') : 
-                document.getElementById('manual-warning');
-            const detailsElement = isGPSMode ? 
-                document.getElementById('warning-details') : 
-                document.getElementById('manual-warning-details');
-            
-            // 가장 위험한 열차 찾기 (화물기차 우선 고려)
-            const urgentTrain = trains.find(train => 
-                train.isFreight && (
-                    train.arrivalCode === '0' || 
-                    train.arrivalMessage?.includes('진입') ||
-                    train.arrivalMessage?.includes('곧') ||
-                    train.arrivalMessage?.includes('출발 중') ||
-                    train.arrivalMessage?.includes('통과 중')
-                )
-            ) || trains.find(train => 
-                train.arrivalCode === '0' || 
-                train.arrivalMessage?.includes('진입') ||
-                train.arrivalMessage?.includes('곧') ||
-                train.arrivalMessage?.includes('출발 중') ||
-                train.arrivalMessage?.includes('통과 중')
-            ) || trains[0];
-            
-            if (!urgentTrain) return;
-            
-            // 현재 위치 통과 열차 경고 메시지
-            const typeIcon = urgentTrain.type === 'subway' ? '🚇' : 
-                             urgentTrain.isFreight ? '🚛' : '🚄';
-            const warningText = urgentTrain.type === 'korail' && urgentTrain.departureStation ? 
-                `${typeIcon} ${urgentTrain.line} (${urgentTrain.departureStation}→${urgentTrain.destination}) - ${urgentTrain.arrivalMessage}` :
-                `${typeIcon} ${urgentTrain.line} ${urgentTrain.station} - ${urgentTrain.arrivalMessage}`;
-            
-            // 경고 지속 시간 계산
-            const warningDuration = currentWarningState.warningStartTime ? 
-                Math.floor((new Date() - currentWarningState.warningStartTime) / 1000) : 0;
-            
-            const timeDisplay = warningDuration > 0 ? ` (${warningDuration}초 지속 중)` : '';
-            
-            // HTML 구조로 경고 표시
-            warningElement.innerHTML = `
-                <div class="warning-header">
-                    <span>⚠️ ${urgentTrain.isFreight ? '화물열차' : '기차'} 접근 경고!</span>
-                    <span class="warning-time">지속${timeDisplay}</span>
-                </div>
-                <div>${warningText}</div>
-            `;
-            
-            warningElement.classList.add('show');
-            
-            // 상태 표시기 업데이트
-            const indicator = isGPSMode ? 
-                document.getElementById('gps-status-indicator') : 
-                document.getElementById('manual-status-indicator');
-            
-            indicator.className = 'status-indicator status-danger';
-            indicator.textContent = urgentTrain.isFreight ? '🚛' : '⚠️';
-        }
-
-        function hideWarning() {
-            document.getElementById('gps-warning').classList.remove('show');
-            document.getElementById('manual-warning').classList.remove('show');
-            
-            // 상태 표시기 업데이트
-            const indicators = [
-                document.getElementById('gps-status-indicator'),
-                document.getElementById('manual-status-indicator')
-            ];
-            
-            indicators.forEach(indicator => {
-                indicator.className = 'status-indicator status-safe';
-                indicator.textContent = '📍';
-            });
-        }
-
-        function triggerAlarm() {
-            // 진동 (모바일에서만 작동) - 한 번만
-            if (navigator.vibrate) {
-                navigator.vibrate([500, 200, 500, 200, 500]);
-            }
-            
-            // 알람음 재생 - 3초만 재생 후 자동 중지
-            if (alarmSound) {
-                alarmSound.play().catch(e => console.log('알람음 재생 실패:', e));
-                
-                // 3초 후 자동 중지
-                setTimeout(() => {
-                    if (alarmSound && !alarmSound.paused) {
-                        alarmSound.pause();
-                        alarmSound.currentTime = 0;
-                    }
-                }, 3000);
-            }
-        }
-
-        function stopAlarm() {
-            if (alarmSound) {
-                alarmSound.pause();
-                alarmSound.currentTime = 0;
-            }
-        }
-
-        function updateMonitoringInfo(stationCount, interval = null, detectedLines = 0) {
-            // GPS 모드와 수동 모드 구분
-            const isGPSMode = document.getElementById('gps-mode').classList.contains('active');
-            
-            if (isGPSMode) {
-                // GPS 모드 업데이트
-                document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
-                document.getElementById('nearby-stations-count').textContent = stationCount;
-                document.getElementById('detected-lines').textContent = `${detectedLines}개`;
-                
-                if (interval) {
-                    const intervalText = interval >= 60000 ? 
-                        `${interval/60000}분` : 
-                        `${interval/1000}초`;
-                    document.getElementById('current-interval').textContent = intervalText;
-                }
-                
-                // GPS 모드 경고 상태 업데이트
-                const warningStatusElement = document.getElementById('warning-status');
-                if (currentWarningState.isActive) {
-                    const duration = Math.floor((new Date() - currentWarningState.warningStartTime) / 1000);
-                    warningStatusElement.textContent = `🚨 경고 중 (${duration}초)`;
-                    warningStatusElement.style.color = '#f44336';
-                    warningStatusElement.style.fontWeight = 'bold';
-                } else {
-                    warningStatusElement.textContent = '✅ 안전';
-                    warningStatusElement.style.color = '#4caf50';
-                    warningStatusElement.style.fontWeight = 'normal';
-                }
-            } else {
-                // 수동 모드 업데이트
-                document.getElementById('manual-last-update').textContent = new Date().toLocaleTimeString();
-                document.getElementById('manual-nearby-stations-count').textContent = stationCount;
-                document.getElementById('manual-detected-lines').textContent = `${detectedLines}개`;
-                
-                if (interval) {
-                    const intervalText = interval >= 60000 ? 
-                        `${interval/60000}분` : 
-                        `${interval/1000}초`;
-                    document.getElementById('manual-current-interval').textContent = intervalText;
-                }
-                
-                // 수동 모드 경고 상태 업데이트
-                const manualWarningStatusElement = document.getElementById('manual-warning-status');
-                if (currentWarningState.isActive) {
-                    const duration = Math.floor((new Date() - currentWarningState.warningStartTime) / 1000);
-                    manualWarningStatusElement.textContent = `🚨 경고 중 (${duration}초)`;
-                    manualWarningStatusElement.style.color = '#f44336';
-                    manualWarningStatusElement.style.fontWeight = 'bold';
-                } else {
-                    manualWarningStatusElement.textContent = '✅ 안전';
-                    manualWarningStatusElement.style.color = '#4caf50';
-                    manualWarningStatusElement.style.fontWeight = 'normal';
-                }
-            }
-        }
-
-        function showError(message) {
-            const errorDiv = document.getElementById('error-display');
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
-            
-            setTimeout(() => {
-                errorDiv.style.display = 'none';
-            }, 5000);
-        }
-
-        // 두 지점 간의 거리 계산 (미터 단위)
-        function calculateDistance(lat1, lng1, lat2, lng2) {
-            const R = 6371e3; // Earth's radius in meters
-            const φ1 = lat1 * Math.PI/180;
-            const φ2 = lat2 * Math.PI/180;
-            const Δφ = (lat2-lat1) * Math.PI/180;
-            const Δλ = (lng2-lng1) * Math.PI/180;
-
-            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-                      Math.cos(φ1) * Math.cos(φ2) *
-                      Math.sin(Δλ/2) * Math.sin(Δλ/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-
-            return R * c;
-        }
-
-        // PWA 지원을 위한 서비스 워커 등록
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                // 필요시 서비스 워커 구현
-            });
-        }
-    </script>
-</body>
-</html>
+                // 경고 처리 - 지속적
