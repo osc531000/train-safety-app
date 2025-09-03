@@ -602,1066 +602,157 @@
             integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
             crossorigin=""></script>
 
-    <script>
-        // 전역 변수
-        let currentPosition = null;
-        let selectedPosition = null;
-        let map = null;
-        let marker = null;
-        let monitoringInterval = null;
-        let isMonitoring = false;
-        let alarmSound = null;
-        let nearbyStations = [];
-        
-        // 경고 상태 관리
-        let currentWarningState = {
-            isActive: false,
-            lastWarningTrain: null,
-            warningStartTime: null,
-            lastUpdateTime: null
-        };
+<script>
+    // 제공된 API 키를 변수로 저장
+    const seoulSubwayApiKey = '4a4d5943506f73633531764f4d6854';
+    const korailApiKey = 'b94e2e220ed1c348f7fe613a70da4ac557a1888a5d25f0e6e3d0e91e41ce4618';
 
-// 제공된 API 키를 변수로 저장
-const seoulSubwayApiKey = '4a4d5943506f73633531764f4d6854';
-const korailApiKey = 'b94e2e220ed1c348f7fe613a70da4ac557a1888a5d25f0e6e3d0e91e41ce4618';
+    // 모든 역 정보를 담을 배열
+    let allStations = [];
+    const warningDistance = 3000; // 3km
+    let isInitialized = false;
 
-// 모든 역 정보를 담을 배열
-let stations = [];
+    // GPS 경고 시스템 상태 관리
+    let monitoringInterval = null;
+    let isMonitoring = false;
+    let alarmSound = null;
+    let currentPosition = null;
 
-// 서울시 지하철역 정보 API 호출 함수
-async function fetchSeoulStations() {
-    // API URL은 검색 결과를 기반으로 예시를 작성했습니다.
-    // 정확한 API URL은 서울시 열린데이터광장(data.seoul.go.kr)에서 확인해야 합니다.
-    const url = `http://openAPI.seoul.go.kr:8088/${seoulSubwayApiKey}/json/SearchInfoBySubwayNameService/1/1000/`;
-    try {
-        const response = await fetch(url);
-        const data = await response.json();
-        // 데이터 구조에 맞춰 역 정보(이름, 위도, 경도 등)를 stations 배열에 추가합니다.
-        // 예를 들어, data.SearchInfoBySubwayNameService.row.forEach(...)
-        console.log("서울시 지하철역 정보:", data);
-        // 실제 API 데이터 구조에 맞게 파싱 로직을 구현해야 합니다.
-    } catch (error) {
-        console.error("서울시 지하철역 정보 로딩 실패:", error);
-    }
-}
-
-// 코레일 역 정보 API 호출 함수
-async function fetchKorailStations() {
-    // API URL은 검색 결과를 기반으로 예시를 작성했습니다.
-    // 정확한 API URL은 공공데이터포털(data.go.kr)에서 확인해야 합니다.
-    const url = `http://apis.data.go.kr/3011000/KtxStationInfoService/getStationInfo?serviceKey=${korailApiKey}`;
-    try {
-        const response = await fetch(url);
-        const data = await response.json();
-        // 데이터 구조에 맞춰 역 정보(이름, 위도, 경도 등)를 stations 배열에 추가합니다.
-        // 예를 들어, data.response.body.items.item.forEach(...)
-        console.log("코레일 역 정보:", data);
-        // 실제 API 데이터 구조에 맞게 파싱 로직을 구현해야 합니다.
-    } catch (error) {
-        console.error("코레일 역 정보 로딩 실패:", error);
-    }
-}
-
-// 페이지 로드 시 API 호출
-async function loadstations() {
-    await fetchSeoulStations();
-    await fetchKorailStations();
-    console.log("모든 역 정보 로딩 완료:", stations);
-    // 모든 역 정보가 로딩된 후, 기존 로직에서 'stations'를 'stations'로 변경하면 됩니다.
-    // 예를 들어, updateGPSInfo() 함수 내부의 for (const station of stations) {} 를 for (const station of stations) {} 로 변경합니다.
-}
-
-// 초기 로딩 함수 실행
-loadstations();
-
-        // 초기화
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeApp();
-        });
-
-        function initializeApp() {
-            // HTTPS 체크
-            checkHTTPS();
-            
-            // 오디오 초기화
-            alarmSound = document.getElementById('alarm-sound');
-            
-            // 지도 초기화
-            initializeMap();
-            
-            // 이벤트 리스너 설정
-            setupEventListeners();
-            
-            // GPS 권한 요청
-            requestLocationPermission();
+    // 초기 GPS 경고 메시지 표시 여부
+    document.addEventListener('DOMContentLoaded', () => {
+        const warningElement = document.getElementById('https-warning');
+        if (window.location.protocol !== 'https:') {
+            warningElement.style.display = 'block';
+        } else {
+            warningElement.style.display = 'none';
         }
+        initializeApp();
+    });
 
-        function checkHTTPS() {
-            const httpsWarning = document.getElementById('https-warning');
-            if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
-                httpsWarning.className = 'https-warning show';
-                updateDebugInfo('HTTP 환경에서는 GPS 접근이 제한될 수 있습니다');
-            } else {
-                httpsWarning.className = 'https-warning hide';
-            }
-        }
+    // 모든 역 정보를 가져오는 함수
+    async function fetchAllStations() {
+        console.log("모든 역 정보 로딩 중...");
+        try {
+            // 서울시 지하철 API 호출 (샘플 URL)
+            const seoulUrl = `http://openAPI.seoul.go.kr:8088/${seoulSubwayApiKey}/json/SearchInfoBySubwayNameService/1/1000/`;
+            const seoulResponse = await fetch(seoulUrl);
+            const seoulData = await seoulResponse.json();
 
-        function updateDebugInfo(info) {
-            const debugDiv = document.getElementById('gps-debug');
-            const debugInfo = document.getElementById('debug-info');
-            debugInfo.textContent = info;
-            debugDiv.style.display = 'block';
-        }
+            // 코레일 API 호출 (샘플 URL)
+            const korailUrl = `http://apis.data.go.kr/3011000/TrainSttnInfoService/getTrainSttnInfo?serviceKey=${korailApiKey}&pageNo=1&numOfRows=1000&_type=json`;
+            const korailResponse = await fetch(korailUrl);
+            const korailData = await korailResponse.json();
 
-        function setupEventListeners() {
-            // GPS 모드 버튼들
-            document.getElementById('start-monitoring').addEventListener('click', startGPSMonitoring);
-            document.getElementById('stop-monitoring').addEventListener('click', stopGPSMonitoring);
-            document.getElementById('retry-gps').addEventListener('click', requestLocationPermission);
-            
-            // 수동 모드 버튼들
-            document.getElementById('start-manual-monitoring').addEventListener('click', startManualMonitoring);
-            document.getElementById('stop-manual-monitoring').addEventListener('click', stopManualMonitoring);
-            
-            // 갱신 주기 변경 이벤트
-            document.getElementById('update-interval').addEventListener('change', function() {
-                if (isMonitoring) {
-                    // 모니터링 중이면 즉시 재시작
-                    stopGPSMonitoring();
-                    setTimeout(() => startGPSMonitoring(), 100);
-                }
-            });
-            
-            document.getElementById('manual-update-interval').addEventListener('change', function() {
-                if (isMonitoring) {
-                    // 모니터링 중이면 즉시 재시작
-                    stopManualMonitoring();
-                    setTimeout(() => startManualMonitoring(), 100);
-                }
-            });
-        }
-
-        function switchMode(mode) {
-            // 활성 버튼 변경
-            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-            
-            // 콘텐츠 섹션 변경
-            document.querySelectorAll('.content-section').forEach(section => {
-                section.classList.remove('active');
-            });
-            
-            if (mode === 'gps') {
-                document.getElementById('gps-mode').classList.add('active');
-            } else {
-                document.getElementById('manual-mode').classList.add('active');
-            }
-            
-            // 기존 모니터링 중지
-            if (isMonitoring) {
-                stopAllMonitoring();
-            }
-        }
-
-        function initializeMap() {
-            // Leaflet 지도 초기화
-            map = L.map('map').setView([37.5665, 126.9780], 10);
-
-            // OpenStreetMap 타일 추가
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors'
-            }).addTo(map);
-
-            // 지도 클릭 이벤트
-            map.on('click', function(e) {
-                setSelectedPosition(e.latlng.lat, e.latlng.lng);
-            });
-
-            // 기차역들 마커 추가
-            TRAIN_STATIONS.forEach(station => {
-                let markerColor = '#2196F3';
-                let markerSize = 8;
-                
-                if (station.type === 'korail') {
-                    markerColor = '#FF5722';
-                    markerSize = 10;
-                } else if (station.type === 'both') {
-                    markerColor = '#9C27B0';
-                    markerSize = 12;
-                }
-                
-                const stationMarker = L.marker([station.lat, station.lng])
-                    .bindPopup(`<b>${station.name}</b><br>${station.lines.join(', ')}<br><small>(${station.type === 'subway' ? '지하철/경전철' : station.type === 'korail' ? '코레일' : '지하철+코레일'})</small>`)
-                    .addTo(map);
-                
-                // 역 타입별 다른 아이콘
-                stationMarker.setIcon(L.divIcon({
-                    html: `<div style="background:${markerColor};width:${markerSize}px;height:${markerSize}px;border-radius:50%;border:2px solid white;"></div>`,
-                    iconSize: [markerSize + 4, markerSize + 4],
-                    className: 'train-station-marker'
-                }));
-            });
-        }
-
-        function requestLocationPermission() {
-            if (!navigator.geolocation) {
-                updateGPSStatus('GPS 미지원', '이 브라우저는 GPS를 지원하지 않습니다');
-                updateDebugInfo('Geolocation API가 지원되지 않습니다');
-                document.getElementById('retry-gps').style.display = 'block';
-                return;
-            }
-
-            document.getElementById('gps-status-text').textContent = 'GPS 권한 요청 중...';
-            updateDebugInfo('GPS 권한 요청 중...');
-            
-            // GPS 옵션 설정
-            const options = {
-                enableHighAccuracy: true,
-                timeout: 15000,  // 15초 타임아웃
-                maximumAge: 300000  // 5분까지 캐시된 위치 허용
-            };
-
-            navigator.geolocation.getCurrentPosition(
-                function(position) {
-                    currentPosition = {
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude,
-                        accuracy: position.coords.accuracy
-                    };
-                    
-                    updateGPSStatus('위치 확인 완료', `위도: ${currentPosition.lat.toFixed(6)}, 경도: ${currentPosition.lng.toFixed(6)}`);
-                    updateDebugInfo(`정확도: ${Math.round(position.coords.accuracy)}m, 시간: ${new Date(position.timestamp).toLocaleTimeString()}`);
-                    
-                    findNearbyStations(currentPosition);
-                    document.getElementById('retry-gps').style.display = 'none';
-                },
-                function(error) {
-                    let errorMsg = 'GPS 오류: ';
-                    let debugMsg = '';
-                    
-                    switch(error.code) {
-                        case error.PERMISSION_DENIED:
-                            errorMsg += '위치 권한이 거부되었습니다';
-                            debugMsg = 'PERMISSION_DENIED - 사용자가 위치 접근을 거부했습니다';
-                            break;
-                        case error.POSITION_UNAVAILABLE:
-                            errorMsg += '위치 정보를 사용할 수 없습니다';
-                            debugMsg = 'POSITION_UNAVAILABLE - GPS 신호를 받을 수 없습니다';
-                            break;
-                        case error.TIMEOUT:
-                            errorMsg += '위치 요청 시간이 초과되었습니다';
-                            debugMsg = 'TIMEOUT - 15초 내에 위치를 가져올 수 없습니다';
-                            break;
-                        default:
-                            errorMsg += '알 수 없는 오류가 발생했습니다';
-                            debugMsg = `UNKNOWN ERROR (${error.code}): ${error.message}`;
-                            break;
-                    }
-                    
-                    updateGPSStatus('GPS 오류', errorMsg);
-                    updateDebugInfo(debugMsg);
-                    document.getElementById('retry-gps').style.display = 'block';
-                    
-                    console.error('GPS Error:', error);
-                },
-                options
-            );
-        }
-
-        function updateGPSStatus(status, location) {
-            document.getElementById('gps-status-text').textContent = status;
-            document.getElementById('gps-location-text').textContent = location;
-        }
-
-        function setSelectedPosition(lat, lng) {
-            selectedPosition = { lat: lat, lng: lng };
-            
-            // 기존 마커 제거
-            if (marker) {
-                map.removeLayer(marker);
-            }
-            
-            // 새 마커 추가
-            marker = L.marker([lat, lng]).addTo(map);
-            marker.bindPopup('선택한 위치').openPopup();
-            
-            // UI 업데이트
-            document.getElementById('selected-lat').textContent = lat.toFixed(6);
-            document.getElementById('selected-lng').textContent = lng.toFixed(6);
-            document.getElementById('start-manual-monitoring').disabled = false;
-            
-            // 주소는 간단히 좌표로 표시 (Nominatim API 사용 시 역지오코딩 가능)
-            document.getElementById('selected-address').textContent = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-            
-            // 상태 업데이트
-            document.getElementById('manual-status-text').textContent = '위치 선택 완료';
-        }
-
-        function findNearbyStations(position) {
-            nearbyStations = TRAIN_STATIONS.filter(station => {
-                const distance = calculateDistance(position.lat, position.lng, station.lat, station.lng);
-                return distance <= 5000; // 5km 이내
-            }).map(station => ({
-                ...station,
-                distance: calculateDistance(position.lat, position.lng, station.lat, station.lng)
-            })).sort((a, b) => a.distance - b.distance);
-
-            console.log(`🢃 근처 역 ${nearbyStations.length}개 발견:`);
-            nearbyStations.slice(0, 10).forEach(station => {
-                console.log(`   ${station.type === 'subway' ? '🚇' : station.type === 'korail' ? '🚄' : '🚆'} ${station.name}: ${Math.round(station.distance)}m`);
-            });
-
-            document.getElementById('nearby-stations-count').textContent = nearbyStations.length;
-            
-            if (nearbyStations.length > 0) {
-                displayNearbyStations(nearbyStations.slice(0, 10)); // 상위 10개 표시
-                
-                // 지하철역과 코레일역 개수 세기
-                const subwayStations = nearbyStations.filter(s => s.type === 'subway' || s.type === 'both').length;
-                const korailStations = nearbyStations.filter(s => s.type === 'korail' || s.type === 'both').length;
-                
-                updateDebugInfo(
-                    `근처 역: ${nearbyStations.length}개`, 
-                    `🚇 지하철역: ${subwayStations}개, 🚄 코레일역: ${korailStations}개`
-                );
-            } else {
-                updateDebugInfo('근처에 역이 없습니다 (5km 반경)');
-            }
-        }
-
-        function displayNearbyStations(stations) {
-            const nearbyStationsDiv = document.getElementById('nearby-stations');
-            const stationsList = document.getElementById('stations-list');
-            
-            stationsList.innerHTML = '';
-            
-            stations.forEach(station => {
-                const stationDiv = document.createElement('div');
-                stationDiv.className = 'station-item';
-                
-                let typeIcon = '🚇';
-                if (station.type === 'korail') typeIcon = '🚄';
-                if (station.type === 'both') typeIcon = '🚆';
-                
-                stationDiv.innerHTML = `
-                    ${typeIcon} <strong>${station.name}</strong> - ${Math.round(station.distance)}m<br>
-                    <small>${station.lines.join(', ')}</small>
-                `;
-                stationsList.appendChild(stationDiv);
-            });
-            
-            nearbyStationsDiv.style.display = 'block';
-        }
-
-        // 디버그 패널 확장
-        function updateDebugInfo(info, extraInfo = '') {
-            const debugDiv = document.getElementById('gps-debug');
-            const debugInfo = document.getElementById('debug-info');
-            const timestamp = new Date().toLocaleTimeString();
-            
-            debugInfo.innerHTML = `
-                <div style="margin-bottom: 5px;"><strong>📍 ${timestamp}</strong></div>
-                <div>${info}</div>
-                ${extraInfo ? `<div style="margin-top: 3px; font-size: 11px;">${extraInfo}</div>` : ''}
-                <div style="margin-top: 5px; font-size: 11px; opacity: 0.8;">
-                    💡 감지 반경: 8km | 확률: 95-98% | 노선: 10개
-                </div>
-            `;
-            debugDiv.style.display = 'block';
-        }
-
-        function startGPSMonitoring() {
-            if (!currentPosition) {
-                alert('GPS 위치 정보가 필요합니다');
-                return;
-            }
-            
-            isMonitoring = true;
-            document.getElementById('start-monitoring').style.display = 'none';
-            document.getElementById('stop-monitoring').style.display = 'block';
-            document.getElementById('monitoring-status').textContent = '모니터링 중';
-            
-            // 선택된 갱신 주기 적용
-            const updateInterval = parseInt(document.getElementById('update-interval').value);
-            
-            // 주기적으로 모니터링
-            monitoringInterval = setInterval(() => {
-                checkNearbyTrains(currentPosition);
-            }, updateInterval);
-            
-            // 즉시 한 번 실행
-            checkNearbyTrains(currentPosition);
-            
-            // 갱신 주기 표시
-            updateMonitoringInfo(0, updateInterval, 15); // 15개 노선 
-        }
-
-        function stopGPSMonitoring() {
-            stopAllMonitoring();
-            document.getElementById('start-monitoring').style.display = 'block';
-            document.getElementById('stop-monitoring').style.display = 'none';
-            document.getElementById('monitoring-status').textContent = '대기 중';
-        }
-
-        function startManualMonitoring() {
-            if (!selectedPosition) {
-                alert('지도에서 위치를 선택해주세요');
-                return;
-            }
-            
-            isMonitoring = true;
-            document.getElementById('start-manual-monitoring').style.display = 'none';
-            document.getElementById('stop-manual-monitoring').style.display = 'block';
-            
-            // 수동 모드 상태 업데이트
-            document.getElementById('manual-monitoring-status').textContent = '모니터링 중';
-            
-            // 선택된 갱신 주기 적용
-            const updateInterval = parseInt(document.getElementById('manual-update-interval').value);
-            
-            // 주기적으로 모니터링
-            monitoringInterval = setInterval(() => {
-                checkNearbyTrains(selectedPosition);
-            }, updateInterval);
-            
-            // 즉시 한 번 실행
-            checkNearbyTrains(selectedPosition);
-        }
-
-        function stopManualMonitoring() {
-            stopAllMonitoring();
-            document.getElementById('start-manual-monitoring').style.display = 'block';
-            document.getElementById('stop-manual-monitoring').style.display = 'none';
-            document.getElementById('manual-monitoring-status').textContent = '대기 중';
-        }
-
-        function stopAllMonitoring() {
-            isMonitoring = false;
-            if (monitoringInterval) {
-                clearInterval(monitoringInterval);
-                monitoringInterval = null;
-            }
-            
-            // 경고 상태 초기화
-            hideWarning();
-            stopAlarm();
-            currentWarningState.isActive = false;
-            currentWarningState.lastWarningTrain = null;
-            currentWarningState.warningStartTime = null;
-            currentWarningState.lastUpdateTime = null;
-            
-            document.getElementById('train-list').style.display = 'none';
-        }
-
-        async function checkNearbyTrains(position) {
-            const alertDistance = parseInt(
-                document.getElementById('alert-distance').value || 
-                document.getElementById('manual-alert-distance').value
-            );
-            
-            try {
-                // 근처 역들에 대해 실시간 데이터 조회
-                const stationsInRange = nearbyStations.length > 0 ? 
-                    nearbyStations.filter(station => station.distance <= alertDistance * 3) :
-                    TRAIN_STATIONS.filter(station => {
-                        const distance = calculateDistance(position.lat, position.lng, station.lat, station.lng);
-                        return distance <= alertDistance * 3;
-                    }).slice(0, 5);
-
-                let allTrainData = [];
-                let dangerousTrains = [];
-
-                for (const station of stationsInRange.slice(0, 5)) { // 상위 5개 역만 체크
-                    console.log(`📍 역 체크: ${station.name} (타입: ${station.type})`);
-                    
-                    try {
-                        let trainData = [];
-                        
-                        // 지하철 데이터 조회 - 실제 역 정보와 일치하도록 수정
-                        if (station.type === 'subway' || station.type === 'both') {
-                            console.log(`🚇 ${station.name} 지하철 데이터 조회 시작`);
-                            const subwayData = await fetchSubwayRealtime(station.name, station.lines);
-                            trainData = [...trainData, ...subwayData];
-                            console.log(`🚇 ${station.name} 지하철 데이터: ${subwayData.length}개`);
-                        }
-                        
-                        // 코레일 데이터 조회 (실제 역사의 호선 정보 사용)
-                        if (station.type === 'korail' || station.type === 'both') {
-                            console.log(`🚄 ${station.name} 코레일 데이터 조회 시작`);
-                            const korailData = await fetchKorailData(station.name, station.lines, position);
-                            trainData = [...trainData, ...korailData];
-                            console.log(`🚄 ${station.name} 코레일 데이터: ${korailData.length}개`);
-                        }
-                        
-                        allTrainData = [...allTrainData, ...trainData];
-                        console.log(`📊 ${station.name} 이 열차: ${trainData.length}개`);
-                        
-                        // 위험 거리 내 열차 확인
-                        const nearTrains = trainData.filter(train => {
-                            const trainDistance = calculateDistance(position.lat, position.lng, station.lat, station.lng);
-                            const inDanger = trainDistance < alertDistance;
-                            if (inDanger) {
-                                console.log(`⚠️ 위험 열차 발견: ${train.line} (거리: ${Math.round(trainDistance)}m)`);
-                            }
-                            return inDanger;
-                        });
-                        
-                        dangerousTrains = [...dangerousTrains, ...nearTrains];
-                    } catch (error) {
-                        console.error(`⌐ ${station.name} 데이터 조회 오류:`, error);
-                    }
-                }
-
-                console.log(`📊 이 결과: ${allTrainData.length}개 열차 감지, ${dangerousTrains.length}개 위험 열차`);
-                
-                // 열차 타입별 개수 세기
-                const subwayCount = allTrainData.filter(t => t.type === 'subway').length;
-                const passengerTrainCount = allTrainData.filter(t => t.type === 'korail' && !t.isFreight).length;
-                const freightTrainCount = allTrainData.filter(t => t.type === 'korail' && t.isFreight).length;
-                console.log(`🚇 지하철: ${subwayCount}개, 🚄 여객열차: ${passengerTrainCount}개, 🚛 화물열차: ${freightTrainCount}개`);
-
-                // 경고 처리 - 지속적으로 표시
-                if (dangerousTrains.length > 0) {
-                    // 새로운 위험 열차 발견
-                    if (!currentWarningState.isActive) {
-                        currentWarningState.isActive = true;
-                        currentWarningState.warningStartTime = new Date();
-                        triggerAlarm(); // 처음 경고 시에만 알람
-                    }
-                    
-                    currentWarningState.lastWarningTrain = dangerousTrains[0];
-                    currentWarningState.lastUpdateTime = new Date();
-                    showWarning(dangerousTrains);
-                    
-                } else {
-                    // 위험 열차가 없음
-                    if (currentWarningState.isActive) {
-                        // 이전에 경고가 있었으면 해제
-                        hideWarning();
-                        currentWarningState.isActive = false;
-                        currentWarningState.lastWarningTrain = null;
-                        currentWarningState.warningStartTime = null;
-                        stopAlarm();
-                    }
-                }
-
-                // 열차 정보 표시
-                displayTrainInfo(allTrainData);
-                
-                // UI 업데이트 - 감지된 철도 노선 수 포함
-                const detectedRailwayLines = 15; // 전체 노선 수
-                updateMonitoringInfo(stationsInRange.length, null, detectedRailwayLines);
-                
-            } catch (error) {
-                console.error('모니터링 에러:', error);
-                showError('모니터링 중 오류가 발생했습니다: ' + error.message);
-            }
-        }
-
-        async function fetchSubwayRealtime(stationName, stationLines) {
-            try {
-                // 실제 서울시 지하철 실시간 도착정보 API 호출
-                const url = `http://swopenAPI.seoul.go.kr/api/subway/${API_KEYS.subway}/json/realtimeStationArrival/0/10/${encodeURIComponent(stationName)}`;
-                
-                const response = await fetch(url, {
-                    method: 'GET',
-                    mode: 'cors'
+            // API 응답에서 역 정보를 파싱하여 allStations 배열에 추가
+            if (seoulData.SearchInfoBySubwayNameService && seoulData.SearchInfoBySubwayNameService.row) {
+                seoulData.SearchInfoBySubwayNameService.row.forEach(station => {
+                    allStations.push({ name: station.STATION_NM, lat: parseFloat(station.X_COORD), lng: parseFloat(station.Y_COORD), type: 'subway' });
                 });
-                
-                if (!response.ok) {
-                    throw new Error(`API 응답 오류: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                
-                if (data.errorMessage) {
-                    throw new Error(data.errorMessage.message || 'API 오류');
-                }
-                
-                const arrivals = data.realtimeArrivalList || [];
-                
-                return arrivals.map(arrival => ({
-                    type: 'subway',
-                    station: stationName,
-                    line: arrival.subwayId || arrival.trainLineNm,
-                    direction: arrival.updnLine,
-                    destination: arrival.bstatnNm,
-                    arrivalMessage: arrival.arvlMsg2 || arrival.arvlMsg3,
-                    arrivalCode: arrival.arvlCd,
-                    currentStation: arrival.arvlMsg3,
-                    timestamp: arrival.recptnDt
-                }));
-                
-            } catch (error) {
-                console.error(`${stationName} 지하철 정보 조회 실패:`, error);
-                // 모의 데이터 반환 (실제 역의 호선 정보 사용)
-                return generateMockSubwayData(stationName, stationLines);
             }
-        }
-
-        async function fetchKorailData(stationName, stationLines, position) {
-            try {
-                // 실제 역의 호선 정보를 기반으로 모의 데이터 생성
-                return await generateEnhancedKorailData(stationName, stationLines, position);
-                
-            } catch (error) {
-                console.error(`코레일 정보 조회 실패:`, error);
-                return await generateEnhancedKorailData(stationName, stationLines, position);
-            }
-        }
-
-        function generateMockSubwayData(stationName, stationLines) {
-            // 개발용 지하철 모의 데이터 (실제 역의 호선 정보 사용)
-            const hour = new Date().getHours();
-            let subwayProbability = 0.95; // 기본 95%로 대폭 상승!
-            
-            if (hour >= 7 && hour <= 9) subwayProbability = 0.98; // 출근시간 98%
-            if (hour >= 18 && hour <= 20) subwayProbability = 0.98; // 퇴근시간 98%
-            if (hour >= 22 || hour <= 5) subwayProbability = 0.8; // 심야도 80%
-            
-            console.log(`🚇 지하철 모의데이터 확률: ${Math.round(subwayProbability * 100)}% (${stationName})`);
-            
-            if (Math.random() > subwayProbability) {
-                console.log(`🚇 ${stationName}: 확률적으로 지하철 없음`);
-                return [];
+            if (korailData.response && korailData.response.body && korailData.response.body.items && korailData.response.body.items.item) {
+                korailData.response.body.items.item.forEach(station => {
+                    allStations.push({ name: station.sttnNm, lat: parseFloat(station.sttnLat), lng: parseFloat(station.sttnLon), type: 'korail' });
+                });
             }
             
-            const numTrains = Math.floor(Math.random() * 4) + 2; // 2-5대로 증가!
-            const trains = [];
-            
-            // 실제 역의 호선 정보 사용
-            const availableLines = stationLines || ['지하철'];
-            
-            const destinations = [
-                '강남', '신도림', '사당', '잠실', '홍대입구', '신촌', 
-                '종로3가', '명동', '이대', '건대입구', '왕십리', '교대',
-                '고속터미널', '김포공항', '인천', '수원', '성수', '합정',
-                '신림', '관악산', '북한산우이', '신설동', '보문', '정릉'
-            ];
-            
-            for (let i = 0; i < numTrains; i++) {
-                // 실제 역의 호선 중에서 선택
-                const line = availableLines[Math.floor(Math.random() * availableLines.length)];
-                const destination = destinations[Math.floor(Math.random() * destinations.length)];
-                const minutesUntil = Math.floor(Math.random() * 12) + 1; // 1-12분
-                
-                const train = {
-                    type: 'subway',
-                    station: stationName,
-                    line: line,
-                    direction: Math.random() > 0.5 ? '내선순환' : '외선순환',
-                    destination: destination,
-                    arrivalMessage: generateSubwayArrivalMessage(minutesUntil),
-                    arrivalCode: minutesUntil <= 3 ? '0' : '1',
-                    currentStation: '전역 출발',
-                    timestamp: new Date().toISOString()
-                };
-                
-                trains.push(train);
-                console.log(`🚇 지하철 생성: ${line} ${destination}행 (${minutesUntil}분)`);
-            }
-            
-            return trains;
+            isInitialized = true;
+            console.log("모든 역 정보 로딩 완료. 총 역 개수:", allStations.length);
+        } catch (error) {
+            console.error("역 정보 로딩 실패:", error);
+            showError("역 정보를 불러오는 데 실패했습니다. 잠시 후 다시 시도해주세요.");
         }
+    }
 
-        function generateSubwayArrivalMessage(minutes) {
-            if (minutes <= 1) return '곧 도착';
-            if (minutes <= 2) return '진입중';
-            if (minutes <= 3) return `${minutes}분 후 도착`;
-            return `${minutes}분 후 도착`;
-        }
+    // 두 지점 간의 거리 계산 (미터 단위)
+    function calculateDistance(lat1, lng1, lat2, lng2) {
+        const R = 6371e3; // Earth's radius in meters
+        const φ1 = lat1 * Math.PI/180;
+        const φ2 = lat2 * Math.PI/180;
+        const Δφ = (lat2-lat1) * Math.PI/180;
+        const Δλ = (lng2-lng1) * Math.PI/180;
 
-        async function generateEnhancedKorailData(stationName, stationLines, position) {
-            // 실제 시간표 기반 향상된 모의 데이터 (실제 역 정보 사용)
-            const currentTime = new Date();
-            const hour = currentTime.getHours();
-            
-            // 실제 역의 코레일 호선 정보만 사용
-            const korailLines = stationLines ? stationLines.filter(line => 
-                line.includes('KTX') || line.includes('새마을') || line.includes('무궁화') || 
-                line.includes('ITX') || line === '코레일'
-            ) : [];
-            
-            if (korailLines.length === 0) {
-                console.log(`📍 ${stationName}: 코레일 노선 없음`);
-                return []; // 코레일 노선이 없으면 빈 배열 반환
-            }
-            
-            // 시간대별 열차 운행 빈도 조정
-            let trainProbability = 0.7;
-            
-            if (hour >= 6 && hour <= 9) trainProbability = 0.95;
-            else if (hour >= 17 && hour <= 20) trainProbability = 0.9;
-            else if (hour >= 10 && hour <= 16) trainProbability = 0.8;
-            else if (hour >= 21 || hour <= 5) trainProbability = 0.6;
-            
-            console.log(`🕐 현재 ${hour}시, 열차 확률: ${Math.round(trainProbability * 100)}%`);
-            
-            if (Math.random() > trainProbability) {
-                console.log(`🚫 확률적으로 열차 없음`);
-                return [];
-            }
+        const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                  Math.cos(φ1) * Math.cos(φ2) *
+                  Math.sin(Δλ/2) * Math.sin(Δλ/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    }
 
-            const trains = [];
-            const numTrains = Math.floor(Math.random() * 3) + 1; // 1-3대
-            
-            console.log(`🚄 생성할 열차 수: ${numTrains}대`);
-            
-            for (let i = 0; i < numTrains; i++) {
-                // 실제 역의 코레일 호선에서 선택
-                const trainLine = korailLines[Math.floor(Math.random() * korailLines.length)];
-                
-                // 호선별 적절한 목적지 설정
-                let destinations = [];
-                if (trainLine.includes('KTX')) {
-                    destinations = ['부산', '대구', '광주송정', '목포', '강릉'];
-                } else if (trainLine.includes('새마을')) {
-                    destinations = ['부산', '대전', '광주', '목포', '포항'];
-                } else {
-                    destinations = ['부산', '대전', '대구', '광주', '목포', '춘천', '강릉'];
-                }
-                
-                const destination = destinations[Math.floor(Math.random() * destinations.length)];
-                const minutesUntilPassing = Math.floor(Math.random() * 30) + 1; // 1-30분 후
-                
-                const train = {
-                    type: 'korail',
-                    station: stationName,
-                    line: trainLine, // 실제 역의 호선 사용
-                    trainNo: generateRealisticTrainNumber(trainLine),
-                    direction: Math.random() > 0.5 ? '상행' : '하행',
-                    destination: destination,
-                    arrivalMessage: generateRealisticArrivalMessage(minutesUntilPassing, false),
-                    arrivalCode: minutesUntilPassing <= 10 ? '0' : '1',
-                    departureStation: getRandomDepartureStation(),
-                    passingTime: addMinutesToTime(currentTime, minutesUntilPassing),
-                    delay: Math.random() > 0.9 ? Math.floor(Math.random() * 15) + '분 지연' : '정상',
-                    isFreight: false,
-                    timestamp: new Date().toISOString()
-                };
-                
-                trains.push(train);
-                console.log(`🚄 생성된 열차: ${train.line}-${train.trainNo} (${minutesUntilPassing}분 후)`);
-            }
-            
-            return trains;
-        }
+    // GPS 위치를 사용하여 가장 가까운 역을 찾는 함수
+    function findNearestStation(lat, lng) {
+        if (!isInitialized) return null;
 
-        function getRandomDepartureStation() {
-            const stations = [
-                '서울', '대전', '대구', '부산', '광주', '용산', '청량리', '수원', '인천',
-                '광양', '포항', '익산', '조치원', '제천', '영주', '안동' // 화물기차 주요 출발지 추가
-            ];
-            return stations[Math.floor(Math.random() * stations.length)];
-        }
+        let minDistance = Infinity;
+        let nearestStation = null;
 
-        function generateRealisticTrainNumber(trainType) {
-            const prefixes = {
-                'KTX': ['100', '120', '140', '160'],
-                '새마을호': ['1', '3', '5', '7'],
-                '무궁화호': ['80', '90', '120', '140'],
-                'ITX-새마을': ['20', '22', '24'],
-                '화물열차': ['8', '9'] // 화물열차 번호 체계
-            };
-            
-            const prefix = prefixes[trainType] || ['100'];
-            const selectedPrefix = prefix[Math.floor(Math.random() * prefix.length)];
-            const suffix = Math.floor(Math.random() * 99).toString().padStart(2, '0');
-            
-            return selectedPrefix + suffix;
-        }
-
-        function generateRealisticArrivalMessage(minutes, isFreight = false) {
-            const freightPrefix = isFreight ? '화물 ' : '';
-            
-            if (minutes <= 2) {
-                return `${freightPrefix}곧 통과`;
-            } else if (minutes <= 5) {
-                return `${freightPrefix}${minutes}분 후 통과`;
-            } else if (minutes <= 15) {
-                return `${freightPrefix}${minutes}분 후 통과`;
-            } else {
-                const hours = Math.floor(minutes / 60);
-                const remainingMinutes = minutes % 60;
-                if (hours > 0) {
-                    return `${freightPrefix}${hours}시간 ${remainingMinutes}분 후 통과`;
-                } else {
-                    return `${freightPrefix}${minutes}분 후 통과`;
-                }
+        for (const station of allStations) {
+            const distance = calculateDistance(lat, lng, station.lat, station.lng);
+            if (distance < minDistance) {
+                minDistance = distance;
+                nearestStation = station;
             }
         }
+        return { ...nearestStation, distance: minDistance };
+    }
 
-        function addMinutesToTime(baseTime, minutes) {
-            const newTime = new Date(baseTime);
-            newTime.setMinutes(newTime.getMinutes() + minutes);
-            return newTime.toTimeString().substring(0, 5); // HH:MM 형식
+    // 경고 시스템 로직
+    function updateWarningSystem(lat, lng) {
+        const result = findNearestStation(lat, lng);
+        const autoWarningStatusElement = document.getElementById('warning-status');
+        
+        if (result && result.distance < warningDistance) {
+            autoWarningStatusElement.textContent = `🚨 경고: ${result.name}역 ${Math.round(result.distance)}m 근접`;
+            autoWarningStatusElement.style.color = 'red';
+            autoWarningStatusElement.style.fontWeight = 'bold';
+        } else {
+            autoWarningStatusElement.textContent = '✅ 안전';
+            autoWarningStatusElement.style.color = '#4caf50';
+            autoWarningStatusElement.style.fontWeight = 'normal';
         }
+    }
 
-        function displayTrainInfo(trainData) {
-            const trainList = document.getElementById('train-list');
-            const trainItems = document.getElementById('train-items');
-            
-            if (trainData.length === 0) {
-                trainList.style.display = 'none';
-                return;
-            }
-            
-            trainItems.innerHTML = '';
-            
-            // 통과 시간순으로 정렬
-            trainData.sort((a, b) => {
-                if (a.arrivalCode === '0' && b.arrivalCode !== '0') return -1;
-                if (b.arrivalCode === '0' && a.arrivalCode !== '0') return 1;
-                return 0;
+    // GPS 수신 성공 시 호출되는 함수
+    function onGPSSuccess(position) {
+        currentPosition = position;
+        const { latitude, longitude } = position.coords;
+        document.getElementById('gps-status-text').textContent = '위치 확인 완료';
+        document.getElementById('gps-location-text').textContent = `위도: ${latitude.toFixed(6)}, 경도: ${longitude.toFixed(6)}`;
+        updateWarningSystem(latitude, longitude);
+    }
+
+    // GPS 수신 실패 시 호출되는 함수
+    function onGPSFailure(error) {
+        console.error("GPS 오류:", error);
+        showError("GPS 위치를 가져오는 데 실패했습니다. 위치 정보가 켜져 있는지 확인해주세요.");
+    }
+    
+    // 에러 메시지 표시 함수
+    function showError(message) {
+        const errorDiv = document.getElementById('error-display');
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+        
+        setTimeout(() => {
+            errorDiv.style.display = 'none';
+        }, 5000);
+    }
+
+    // 초기화 함수
+    function initializeApp() {
+        fetchAllStations();
+        if (navigator.geolocation) {
+            navigator.geolocation.watchPosition(onGPSSuccess, onGPSFailure, {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0
             });
-            
-            trainData.forEach(train => {
-                const trainDiv = document.createElement('div');
-                trainDiv.className = `train-item ${train.type}`;
-                
-                let statusColor = '#4caf50';
-                let typeIcon = train.type === 'subway' ? '🚇' : '🚄';
-                let urgencyClass = '';
-                
-                if (train.arrivalCode === '0' || 
-                    train.arrivalMessage?.includes('진입') || 
-                    train.arrivalMessage?.includes('곧') || 
-                    train.arrivalMessage?.includes('출발 중') ||
-                    train.arrivalMessage?.includes('통과 중')) {
-                    statusColor = '#f44336';
-                    urgencyClass = ' urgent';
-                } else if (train.arrivalMessage?.includes('1분') || 
-                           train.arrivalMessage?.includes('2분') || 
-                           train.arrivalMessage?.includes('3분') || 
-                           train.arrivalMessage?.includes('5분')) {
-                    statusColor = '#ff9800';
-                    urgencyClass = ' warning';
-                }
-                
-                trainDiv.style.borderLeftColor = statusColor;
-                trainDiv.className += urgencyClass;
-                
-                let additionalInfo = '';
-                if (train.type === 'korail') {
-                    const trainIcon = train.isFreight ? '🚛' : '🚄';
-                    additionalInfo = `
-                        <div style="margin-top: 5px; font-size: 12px; color: #666;">
-                            ${trainIcon} 열차번호: ${train.trainNo}
-                            ${train.departureStation ? `<br>🚩 출발: ${train.departureStation}` : ''}
-                            ${train.passingTime ? `<br>🕐 통과예정: ${train.passingTime}` : ''}
-                            ${train.estimatedLocation ? `<br>📍 현재위치: ${train.estimatedLocation}` : ''}
-                            ${train.isFreight ? `<br>⚠️ 화물열차` : ''}
-                        </div>
-                    `;
-                }
-                
-                const destination = train.destination || '목적지';
-                const direction = train.direction || '';
-                
-                trainDiv.innerHTML = `
-                    <div class="train-line">${typeIcon} ${train.line} - ${train.station}</div>
-                    <div class="train-info">
-                        ${direction} | ${destination} 방면<br>
-                        <span style="color:${statusColor};font-weight:bold;">${train.arrivalMessage}</span>
-                        ${additionalInfo}
-                    </div>
-                `;
-                trainItems.appendChild(trainDiv);
-            });
-            
-            trainList.style.display = 'block';
+        } else {
+            showError("이 브라우저는 GPS를 지원하지 않습니다.");
         }
+    }
 
-        function showWarning(trains) {
-            const isGPSMode = document.getElementById('gps-mode').classList.contains('active');
-            const warningElement = isGPSMode ? 
-                document.getElementById('gps-warning') : 
-                document.getElementById('manual-warning');
-            
-            // 가장 위험한 열차 찾기 (화물기차 우선 고려)
-            const urgentTrain = trains.find(train => 
-                train.isFreight && (
-                    train.arrivalCode === '0' || 
-                    train.arrivalMessage?.includes('진입') ||
-                    train.arrivalMessage?.includes('곧') ||
-                    train.arrivalMessage?.includes('출발 중') ||
-                    train.arrivalMessage?.includes('통과 중')
-                )
-            ) || trains.find(train => 
-                train.arrivalCode === '0' || 
-                train.arrivalMessage?.includes('진입') ||
-                train.arrivalMessage?.includes('곧') ||
-                train.arrivalMessage?.includes('출발 중') ||
-                train.arrivalMessage?.includes('통과 중')
-            ) || trains[0];
-            
-            if (!urgentTrain) return;
-            
-            // 현재 위치 통과 열차 경고 메시지
-            const typeIcon = urgentTrain.type === 'subway' ? '🚇' : 
-                             urgentTrain.isFreight ? '🚛' : '🚄';
-            const warningText = urgentTrain.type === 'korail' && urgentTrain.departureStation ? 
-                `${typeIcon} ${urgentTrain.line} (${urgentTrain.departureStation}→${urgentTrain.destination}) - ${urgentTrain.arrivalMessage}` :
-                `${typeIcon} ${urgentTrain.line} ${urgentTrain.station} - ${urgentTrain.arrivalMessage}`;
-            
-            // 경고 지속 시간 계산
-            const warningDuration = currentWarningState.warningStartTime ? 
-                Math.floor((new Date() - currentWarningState.warningStartTime) / 1000) : 0;
-            
-            const timeDisplay = warningDuration > 0 ? ` (${warningDuration}초 지속 중)` : '';
-            
-            // HTML 구조로 경고 표시
-            warningElement.innerHTML = `
-                <div class="warning-header">
-                    <span>⚠️ ${urgentTrain.isFreight ? '화물열차' : '기차'} 접근 경고!</span>
-                    <span class="warning-time">지속${timeDisplay}</span>
-                </div>
-                <div>${warningText}</div>
-            `;
-            
-            warningElement.classList.add('show');
-            
-            // 상태 표시기 업데이트
-            const indicator = isGPSMode ? 
-                document.getElementById('gps-status-indicator') : 
-                document.getElementById('manual-status-indicator');
-            
-            indicator.className = 'status-indicator status-danger';
-            indicator.textContent = urgentTrain.isFreight ? '🚛' : '⚠️';
-        }
+</script>
 
-        function hideWarning() {
-            document.getElementById('gps-warning').classList.remove('show');
-            document.getElementById('manual-warning').classList.remove('show');
-            
-            // 상태 표시기 업데이트
-            const indicators = [
-                document.getElementById('gps-status-indicator'),
-                document.getElementById('manual-status-indicator')
-            ];
-            
-            indicators.forEach(indicator => {
-                indicator.className = 'status-indicator status-safe';
-                indicator.textContent = '📍';
-            });
-        }
 
-        function triggerAlarm() {
-            // 진동 (모바일에서만 작동) - 한 번만
-            if (navigator.vibrate) {
-                navigator.vibrate([500, 200, 500, 200, 500]);
-            }
-            
-            // 알람음 재생 - 3초만 재생 후 자동 중지
-            if (alarmSound) {
-                alarmSound.play().catch(e => console.log('알람음 재생 실패:', e));
-                
-                // 3초 후 자동 중지
-                setTimeout(() => {
-                    if (alarmSound && !alarmSound.paused) {
-                        alarmSound.pause();
-                        alarmSound.currentTime = 0;
-                    }
-                }, 3000);
-            }
-        }
-
-        function stopAlarm() {
-            if (alarmSound) {
-                alarmSound.pause();
-                alarmSound.currentTime = 0;
-            }
-        }
-
-        function updateMonitoringInfo(stationCount, interval = null, detectedLines = 0) {
-            // GPS 모드와 수동 모드 구분
-            const isGPSMode = document.getElementById('gps-mode').classList.contains('active');
-            
-            if (isGPSMode) {
-                // GPS 모드 업데이트
-                document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
-                document.getElementById('nearby-stations-count').textContent = stationCount;
-                document.getElementById('detected-lines').textContent = `${detectedLines}개`;
-                
-                if (interval) {
-                    const intervalText = interval >= 60000 ? 
-                        `${interval/60000}분` : 
-                        `${interval/1000}초`;
-                    document.getElementById('current-interval').textContent = intervalText;
-                }
-                
-                // GPS 모드 경고 상태 업데이트
-                const warningStatusElement = document.getElementById('warning-status');
-                if (currentWarningState.isActive) {
-                    const duration = Math.floor((new Date() - currentWarningState.warningStartTime) / 1000);
-                    warningStatusElement.textContent = `🚨 경고 중 (${duration}초)`;
-                    warningStatusElement.style.color = '#f44336';
-                    warningStatusElement.style.fontWeight = 'bold';
-                } else {
-                    warningStatusElement.textContent = '✅ 안전';
-                    warningStatusElement.style.color = '#4caf50';
-                    warningStatusElement.style.fontWeight = 'normal';
-                }
-            } else {
-                // 수동 모드 업데이트
-                document.getElementById('manual-last-update').textContent = new Date().toLocaleTimeString();
-                document.getElementById('manual-nearby-stations-count').textContent = stationCount;
-                document.getElementById('manual-detected-lines').textContent = `${detectedLines}개`;
-                
-                if (interval) {
-                    const intervalText = interval >= 60000 ? 
-                        `${interval/60000}분` : 
-                        `${interval/1000}초`;
-                    document.getElementById('manual-current-interval').textContent = intervalText;
-                }
-                
-                // 수동 모드 경고 상태 업데이트
-                const manualWarningStatusElement = document.getElementById('manual-warning-status');
-                if (currentWarningState.isActive) {
-                    const duration = Math.floor((new Date() - currentWarningState.warningStartTime) / 1000);
-                    manualWarningStatusElement.textContent = `🚨 경고 중 (${duration}초)`;
-                    manualWarningStatusElement.style.color = '#f44336';
-                    manualWarningStatusElement.style.fontWeight = 'bold';
-                } else {
-                    manualWarningStatusElement.textContent = '✅ 안전';
-                    manualWarningStatusElement.style.color = '#4caf50';
-                    manualWarningStatusElement.style.fontWeight = 'normal';
-                }
-            }
-        }
-
-        function showError(message) {
-            const errorDiv = document.getElementById('error-display');
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
-            
-            setTimeout(() => {
-                errorDiv.style.display = 'none';
-            }, 5000);
-        }
-
-        // 두 지점 간의 거리 계산 (미터 단위)
-        function calculateDistance(lat1, lng1, lat2, lng2) {
-            const R = 6371e3; // Earth's radius in meters
-            const φ1 = lat1 * Math.PI/180;
-            const φ2 = lat2 * Math.PI/180;
-            const Δφ = (lat2-lat1) * Math.PI/180;
-            const Δλ = (lng2-lng1) * Math.PI/180;
-
-            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-                      Math.cos(φ1) * Math.cos(φ2) *
-                      Math.sin(Δλ/2) * Math.sin(Δλ/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-
-            return R * c;
-        }
-
-        // PWA 지원을 위한 서비스 워커 등록
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                // 필요시 서비스 워커 구현
-            });
-        }
-    </script>
 </body>
 </html>
