@@ -607,18 +607,17 @@
     const seoulSubwayApiKey = '4a4d5943506f73633531764f4d6854';
     const korailApiKey = 'b94e2e220ed1c348f7fe613a70da4ac557a1888a5d25f0e6e3d0e91e41ce4618';
 
-    // 모든 역 정보를 담을 배열
-    let allStations = [];
-    const warningDistance = 3000; // 3km
-    let isInitialized = false;
-
-    // GPS 경고 시스템 상태 관리
+    // 전역 변수
+    let currentPosition = null;
+    let selectedPosition = null;
+    let map = null;
+    let marker = null;
     let monitoringInterval = null;
     let isMonitoring = false;
     let alarmSound = null;
-    let currentPosition = null;
+    let allStations = []; // 동적 로딩된 모든 역 정보
 
-    // 초기 GPS 경고 메시지 표시 여부
+    // 초기화 및 이벤트 리스너
     document.addEventListener('DOMContentLoaded', () => {
         const warningElement = document.getElementById('https-warning');
         if (window.location.protocol !== 'https:') {
@@ -626,8 +625,25 @@
         } else {
             warningElement.style.display = 'none';
         }
+        initializeMap();
         initializeApp();
     });
+
+    // 지도 초기화
+    function initializeMap() {
+        if (!map) {
+            map = L.map('map').setView([37.5665, 126.9780], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            map.on('click', function(e) {
+                if (document.getElementById('manual-mode').style.display === 'block') {
+                    handleManualClick(e.latlng);
+                }
+            });
+        }
+    }
 
     // 모든 역 정보를 가져오는 함수
     async function fetchAllStations() {
@@ -655,7 +671,6 @@
                 });
             }
             
-            isInitialized = true;
             console.log("모든 역 정보 로딩 완료. 총 역 개수:", allStations.length);
         } catch (error) {
             console.error("역 정보 로딩 실패:", error);
@@ -670,18 +685,13 @@
         const φ2 = lat2 * Math.PI/180;
         const Δφ = (lat2-lat1) * Math.PI/180;
         const Δλ = (lng2-lng1) * Math.PI/180;
-
-        const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-                  Math.cos(φ1) * Math.cos(φ2) *
-                  Math.sin(Δλ/2) * Math.sin(Δλ/2);
+        const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         return R * c;
     }
 
     // GPS 위치를 사용하여 가장 가까운 역을 찾는 함수
     function findNearestStation(lat, lng) {
-        if (!isInitialized) return null;
-
         let minDistance = Infinity;
         let nearestStation = null;
 
@@ -695,28 +705,11 @@
         return { ...nearestStation, distance: minDistance };
     }
 
-    // 경고 시스템 로직
-    function updateWarningSystem(lat, lng) {
-        const result = findNearestStation(lat, lng);
-        const autoWarningStatusElement = document.getElementById('warning-status');
-        
-        if (result && result.distance < warningDistance) {
-            autoWarningStatusElement.textContent = `🚨 경고: ${result.name}역 ${Math.round(result.distance)}m 근접`;
-            autoWarningStatusElement.style.color = 'red';
-            autoWarningStatusElement.style.fontWeight = 'bold';
-        } else {
-            autoWarningStatusElement.textContent = '✅ 안전';
-            autoWarningStatusElement.style.color = '#4caf50';
-            autoWarningStatusElement.style.fontWeight = 'normal';
-        }
-    }
-
     // GPS 수신 성공 시 호출되는 함수
     function onGPSSuccess(position) {
         currentPosition = position;
         const { latitude, longitude } = position.coords;
-        document.getElementById('gps-status-text').textContent = '위치 확인 완료';
-        document.getElementById('gps-location-text').textContent = `위도: ${latitude.toFixed(6)}, 경도: ${longitude.toFixed(6)}`;
+        updateAutoDashboard(latitude, longitude);
         updateWarningSystem(latitude, longitude);
     }
 
@@ -724,35 +717,147 @@
     function onGPSFailure(error) {
         console.error("GPS 오류:", error);
         showError("GPS 위치를 가져오는 데 실패했습니다. 위치 정보가 켜져 있는지 확인해주세요.");
+        stopMonitoring();
     }
     
+    // GPS 모니터링 시작
+    function startGPSMonitoring() {
+        if (!isMonitoring) {
+            isMonitoring = true;
+            monitoringInterval = navigator.geolocation.watchPosition(onGPSSuccess, onGPSFailure, {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0
+            });
+            document.getElementById('start-gps-btn').textContent = 'GPS 모니터링 중지';
+            document.getElementById('start-gps-btn').classList.add('active');
+            console.log("GPS 모니터링 시작");
+        } else {
+            stopGPSMonitoring();
+        }
+    }
+    
+    // GPS 모니터링 중지
+    function stopGPSMonitoring() {
+        if (isMonitoring && monitoringInterval) {
+            navigator.geolocation.clearWatch(monitoringInterval);
+            isMonitoring = false;
+            document.getElementById('start-gps-btn').textContent = 'GPS 모니터링 시작';
+            document.getElementById('start-gps-btn').classList.remove('active');
+            console.log("GPS 모니터링 중지");
+            updateAutoDashboard(null, null);
+        }
+    }
+
+    // 자동 모드 대시보드 업데이트
+    function updateAutoDashboard(lat, lng) {
+        if (lat && lng) {
+            const result = findNearestStation(lat, lng);
+            document.getElementById('gps-status-text').textContent = '위치 확인 완료';
+            document.getElementById('gps-location-text').textContent = `위도: ${lat.toFixed(6)}, 경도: ${lng.toFixed(6)}`;
+            document.getElementById('nearest-station-auto').textContent = `가장 가까운 역: ${result.name} (${Math.round(result.distance)}m)`;
+            document.getElementById('auto-warning-status').textContent = '✅ 안전';
+        } else {
+            document.getElementById('gps-status-text').textContent = 'GPS 모니터링 중지됨';
+            document.getElementById('gps-location-text').textContent = '-';
+            document.getElementById('nearest-station-auto').textContent = '-';
+            document.getElementById('auto-warning-status').textContent = '-';
+        }
+    }
+    
+    // 수동 모드 대시보드 업데이트
+    function updateManualDashboard(lat, lng, name, distance) {
+        document.getElementById('manual-location-text').textContent = `위도: ${lat.toFixed(6)}, 경도: ${lng.toFixed(6)}`;
+        document.getElementById('selected-station-name').textContent = `선택된 역: ${name}`;
+        document.getElementById('manual-warning-status').textContent = `거리: ${Math.round(distance)}m`;
+        updateManualWarningSystem(distance);
+    }
+    
+    // 수동 모드 경고 시스템
+    function updateManualWarningSystem(distance) {
+        const manualWarningStatusElement = document.getElementById('manual-warning-status');
+        const warningDistance = 3000; // 3km
+        if (distance < warningDistance) {
+            manualWarningStatusElement.textContent = `🚨 경고: ${Math.round(distance)}m 근접`;
+            manualWarningStatusElement.style.color = 'red';
+            manualWarningStatusElement.style.fontWeight = 'bold';
+        } else {
+            manualWarningStatusElement.textContent = '✅ 안전';
+            manualWarningStatusElement.style.color = '#4caf50';
+            manualWarningStatusElement.style.fontWeight = 'normal';
+        }
+    }
+
+    // 경고 시스템 로직
+    function updateWarningSystem(lat, lng) {
+        const warningStatusElement = document.getElementById('warning-status');
+        const result = findNearestStation(lat, lng);
+        const warningDistance = 3000; // 3km
+
+        if (result && result.distance < warningDistance) {
+            warningStatusElement.textContent = `🚨 경고: ${result.name}역 ${Math.round(result.distance)}m 근접`;
+            warningStatusElement.style.color = 'red';
+            warningStatusElement.style.fontWeight = 'bold';
+        } else {
+            warningStatusElement.textContent = '✅ 안전';
+            warningStatusElement.style.color = '#4caf50';
+            warningStatusElement.style.fontWeight = 'normal';
+        }
+    }
+
+    // 모드 전환
+    function switchMode() {
+        const autoMode = document.getElementById('auto-mode');
+        const manualMode = document.getElementById('manual-mode');
+        if (autoMode.style.display !== 'none') {
+            autoMode.style.display = 'none';
+            manualMode.style.display = 'block';
+            stopGPSMonitoring();
+            clearMap();
+        } else {
+            autoMode.style.display = 'block';
+            manualMode.style.display = 'none';
+            clearMap();
+        }
+    }
+
+    // 수동 모드 클릭 핸들러
+    function handleManualClick(latlng) {
+        selectedPosition = latlng;
+        if (marker) {
+            map.removeLayer(marker);
+        }
+        marker = L.marker(selectedPosition).addTo(map);
+        const result = findNearestStation(selectedPosition.lat, selectedPosition.lng);
+        if (result) {
+            updateManualDashboard(selectedPosition.lat, selectedPosition.lng, result.name, result.distance);
+        }
+    }
+
+    // 맵 초기화
+    function clearMap() {
+        if (marker) {
+            map.removeLayer(marker);
+        }
+        selectedPosition = null;
+        // 맵 초기화 로직
+    }
+
     // 에러 메시지 표시 함수
     function showError(message) {
         const errorDiv = document.getElementById('error-display');
         errorDiv.textContent = message;
         errorDiv.style.display = 'block';
-        
         setTimeout(() => {
             errorDiv.style.display = 'none';
         }, 5000);
     }
 
-    // 초기화 함수
+    // 초기 실행
     function initializeApp() {
         fetchAllStations();
-        if (navigator.geolocation) {
-            navigator.geolocation.watchPosition(onGPSSuccess, onGPSFailure, {
-                enableHighAccuracy: true,
-                timeout: 5000,
-                maximumAge: 0
-            });
-        } else {
-            showError("이 브라우저는 GPS를 지원하지 않습니다.");
-        }
     }
-
 </script>
-
 
 </body>
 </html>
