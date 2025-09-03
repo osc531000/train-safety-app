@@ -4,408 +4,247 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>기차 안전 경고 시스템</title>
-    
-    <!-- HTTPS 필수 알림 -->
-    <meta name="description" content="GPS 기반 기차 안전 경고 시스템 - HTTPS 환경 필요">
-    
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-          crossorigin=""/>
-    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
+        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Arial', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             color: #333;
         }
-
+        
         .container {
-            max-width: 420px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
-            background: white;
-            min-height: 100vh;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
         }
-
+        
         .header {
             text-align: center;
             margin-bottom: 30px;
-            padding: 20px 0;
-            background: linear-gradient(135deg, #ff6b6b, #ffa726);
-            border-radius: 15px;
             color: white;
         }
-
+        
         .header h1 {
-            font-size: 24px;
-            margin-bottom: 5px;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
-
-        .header p {
-            opacity: 0.9;
-            font-size: 14px;
-        }
-
-        .https-warning {
-            background: #fff3cd;
-            border: 2px solid #ffc107;
-            border-radius: 10px;
-            padding: 15px;
+        
+        .controls {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 25px;
             margin-bottom: 20px;
-            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
         }
-
-        .https-warning.show {
-            display: block;
-        }
-
-        .https-warning.hide {
-            display: none;
-        }
-
-        .mode-selector {
+        
+        .button-group {
             display: flex;
-            margin-bottom: 20px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 4px;
-        }
-
-        .mode-btn {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            background: transparent;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 14px;
-        }
-
-        .mode-btn.active {
-            background: #667eea;
-            color: white;
-            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-        }
-
-        .content-section {
-            display: none;
-        }
-
-        .content-section.active {
-            display: block;
-        }
-
-        .status-card {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .status-indicator {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            margin: 0 auto 15px;
-            display: flex;
-            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
             justify-content: center;
-            font-size: 24px;
-        }
-
-        .status-safe {
-            background: #4caf50;
-        }
-
-        .status-warning {
-            background: #ff9800;
-            animation: pulse 1.5s infinite;
-        }
-
-        .status-danger {
-            background: #f44336;
-            animation: pulse 1s infinite;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
-
-        .control-panel {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            border: 2px solid #e9ecef;
             margin-bottom: 20px;
         }
-
-        .button {
-            width: 100%;
-            padding: 15px;
+        
+        .btn {
+            padding: 12px 24px;
             border: none;
-            border-radius: 10px;
+            border-radius: 25px;
             font-size: 16px;
             cursor: pointer;
-            transition: all 0.3s;
-            margin-bottom: 10px;
+            transition: all 0.3s ease;
             font-weight: 600;
         }
-
+        
         .btn-primary {
-            background: #667eea;
+            background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
             color: white;
         }
-
-        .btn-primary:hover {
-            background: #5a6fd8;
-            transform: translateY(-2px);
+        
+        .btn-secondary {
+            background: linear-gradient(45deg, #fa709a 0%, #fee140 100%);
+            color: white;
         }
-
-        .btn-primary:disabled {
-            background: #ccc;
+        
+        .btn-danger {
+            background: linear-gradient(45deg, #ff6b6b 0%, #ffa500 100%);
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
             cursor: not-allowed;
             transform: none;
         }
-
-        .btn-danger {
-            background: #f44336;
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #d32f2f;
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-
-        #map {
-            width: 100%;
-            height: 300px;
-            border-radius: 12px;
+        
+        .settings {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
             margin-bottom: 20px;
-            border: 2px solid #e9ecef;
         }
-
-        .info-panel {
-            background: #e3f2fd;
-            border-radius: 10px;
+        
+        .setting-group {
+            background: rgba(255,255,255,0.1);
             padding: 15px;
-            margin-bottom: 20px;
+            border-radius: 10px;
         }
-
-        .info-panel h3 {
-            color: #1976d2;
-            margin-bottom: 10px;
-            font-size: 16px;
+        
+        .setting-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
         }
-
-        .info-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
+        
+        .setting-group input, .setting-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
             font-size: 14px;
         }
-
-        .warning-message {
-            background: #fff3cd;
-            border: 2px solid #ffc107;
-            border-radius: 8px;
-            padding: 15px;
+        
+        .map-container {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
             margin-bottom: 20px;
-            color: #856404;
-            display: none;
-            position: sticky;
-            top: 10px;
-            z-index: 1000;
-            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
         }
-
-        .warning-message.show {
-            display: block;
-            animation: shake 0.5s ease-in-out, persistentGlow 2s infinite;
+        
+        #map {
+            height: 400px;
+            width: 100%;
         }
-
-        @keyframes persistentGlow {
-            0%, 100% { 
-                box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
-                border-color: #ffc107;
-            }
-            50% { 
-                box-shadow: 0 4px 20px rgba(255, 87, 34, 0.5);
-                border-color: #ff5722;
-            }
+        
+        .status {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
         }
-
-        .warning-header {
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 8px;
+        
+        .status-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
         }
-
-        .warning-time {
-            font-size: 12px;
-            opacity: 0.8;
-            font-weight: normal;
+        
+        .status-item:last-child {
+            border-bottom: none;
         }
-
-        .train-item.urgent {
-            animation: urgentPulse 1s infinite;
-            box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);
+        
+        .status-label {
+            font-weight: bold;
+            color: #666;
         }
-
-        .train-item.warning {
-            animation: warningPulse 2s infinite;
-            box-shadow: 0 2px 8px rgba(255, 152, 0, 0.2);
-        }
-
-        @keyframes urgentPulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-        }
-
-        @keyframes warningPulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.8; }
-        }
-
-        .distance-input, select.distance-input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            font-size: 16px;
-            margin-bottom: 15px;
-            background: white;
-            color: #333;
-        }
-
-        select.distance-input {
-            cursor: pointer;
-            appearance: none;
-            background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 5"><path fill="%23666" d="m0 1 2 2 2-2z"/></svg>');
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            background-size: 12px;
-            padding-right: 40px;
-        }
-
-        .train-list {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
-        .train-item {
-            background: white;
-            border-radius: 6px;
-            padding: 12px;
-            margin-bottom: 8px;
-            border-left: 4px solid #667eea;
+        
+        .status-value {
             font-size: 14px;
-        }
-
-        .train-item.subway {
-            border-left-color: #2196f3;
-        }
-
-        .train-item.korail {
-            border-left-color: #ff5722;
-        }
-
-        .train-item .train-line {
-            font-weight: bold;
             color: #333;
         }
-
-        .train-item .train-info {
-            color: #666;
-            margin-top: 5px;
+        
+        .alert {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(45deg, #ff4757 0%, #ff3838 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(255,71,87,0.3);
+            z-index: 9999;
+            text-align: center;
+            animation: alertPulse 1s infinite;
+            display: none;
         }
-
-        .train-item .train-distance {
-            color: #ff6b6b;
+        
+        .alert h2 {
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+        
+        .alert p {
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .alert .btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid white;
+        }
+        
+        @keyframes alertPulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.05); }
+        }
+        
+        .train-info {
+            background: rgba(255,255,255,0.95);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            border-left: 4px solid #4facfe;
+        }
+        
+        .train-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .train-item:last-child {
+            border-bottom: none;
+        }
+        
+        .distance-warning {
+            color: #ff4757;
             font-weight: bold;
         }
-
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #666;
+        
+        .distance-safe {
+            color: #2ed573;
+            font-weight: bold;
         }
-
-        .error-message {
-            background: #ffebee;
-            border: 1px solid #ffcdd2;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-            color: #c62828;
-        }
-
-        .footer {
-            text-align: center;
-            padding: 20px;
-            color: #666;
-            font-size: 12px;
-            border-top: 1px solid #e9ecef;
-            margin-top: 30px;
-        }
-
-        .nearby-stations {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 10px;
-            margin-top: 15px;
-        }
-
-        .station-item {
-            background: white;
-            border-radius: 6px;
-            padding: 8px;
-            margin-bottom: 5px;
-            font-size: 13px;
-            border-left: 3px solid #4caf50;
-        }
-
-        .gps-debug {
-            background: #e1f5fe;
-            border: 1px solid #b3e5fc;
-            border-radius: 8px;
-            padding: 10px;
-            margin-bottom: 15px;
-            font-size: 12px;
-            color: #01579b;
-        }
-
-        @media (max-width: 480px) {
+        
+        @media (max-width: 768px) {
             .container {
-                padding: 15px;
+                padding: 10px;
             }
             
             .header h1 {
-                font-size: 20px;
+                font-size: 2em;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            .settings {
+                grid-template-columns: 1fr;
+            }
+            
+            #map {
+                height: 300px;
             }
         }
     </style>
@@ -413,1178 +252,599 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🚆 기차 접근 알림 v1.2</h1>
-            <p>GPS 기반 실시간 안전 모니터링</p>
+            <h1>🚊 기차 안전 경고 시스템</h1>
+            <p>GPS 추적 또는 수동 위치 설정으로 기차 근접 시 안전 경고를 받으세요</p>
         </div>
-
-        <!-- HTTPS 경고 -->
-        <div id="https-warning" class="https-warning">
-            <strong>⚠️ 중요!</strong><br>
-            GPS 기능을 사용하려면 <strong>HTTPS 환경</strong>이 필요합니다.<br>
-            <small>GitHub Pages에 배포하면 자동으로 HTTPS가 적용됩니다.</small>
-        </div>
-
-        <div class="mode-selector">
-            <button class="mode-btn active" onclick="switchMode('gps')">GPS 기반 경고</button>
-            <button class="mode-btn" onclick="switchMode('manual')">수동 위치 선택</button>
-        </div>
-
-        <!-- GPS 기반 모드 -->
-        <div id="gps-mode" class="content-section active">
-            <div class="status-card">
-                <div id="gps-status-indicator" class="status-indicator status-safe">📍</div>
-                <h3 id="gps-status-text">GPS 위치 확인 중...</h3>
-                <p id="gps-location-text">위치 정보를 가져오고 있습니다</p>
+        
+        <div class="controls">
+            <div class="button-group">
+                <button id="startGpsBtn" class="btn btn-primary">📍 GPS 추적 시작</button>
+                <button id="stopGpsBtn" class="btn btn-secondary" disabled>⏹️ GPS 추적 중지</button>
+                <button id="manualModeBtn" class="btn btn-secondary">📍 수동 위치 설정</button>
+                <button id="clearMarkersBtn" class="btn btn-danger">🗑️ 마커 지우기</button>
             </div>
-
-            <!-- GPS 디버그 정보 -->
-            <div id="gps-debug" class="gps-debug" style="display:none;">
-                <strong>GPS 디버그 정보:</strong><br>
-                <span id="debug-info">확인 중...</span>
-            </div>
-
-            <div class="control-panel">
-                <button id="start-monitoring" class="button btn-primary">모니터링 시작</button>
-                <button id="stop-monitoring" class="button btn-danger" style="display:none;">모니터링 중지</button>
-                <button id="retry-gps" class="button btn-secondary" style="display:none;">GPS 재시도</button>
-                
-                <div style="margin-top: 15px;">
-                    <label for="alert-distance">경고 거리 (미터):</label>
-                    <input type="number" id="alert-distance" class="distance-input" value="500" min="100" max="2000">
-                    
-                    <label for="update-interval">갱신 주기:</label>
-                    <select id="update-interval" class="distance-input" style="height: 50px;">
-                        <option value="5000">⚡ 5초 (고성능)</option>
-                        <option value="10000">🔥 10초 (빠름)</option>
-                        <option value="20000">⚖️ 20초 (균형)</option>
-                        <option value="30000" selected>🔋 30초 (절약)</option>
-                        <option value="60000">💤 60초 (저전력)</option>
+            
+            <div class="settings">
+                <div class="setting-group">
+                    <label for="alertDistance">경고 거리 (미터)</label>
+                    <input type="number" id="alertDistance" value="500" min="100" max="2000" step="100">
+                </div>
+                <div class="setting-group">
+                    <label for="updateInterval">업데이트 간격 (초)</label>
+                    <input type="number" id="updateInterval" value="30" min="10" max="300" step="10">
+                </div>
+                <div class="setting-group">
+                    <label for="alertSound">경고음</label>
+                    <select id="alertSound">
+                        <option value="beep">비프음</option>
+                        <option value="siren">사이렌</option>
+                        <option value="bell">벨소리</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <label for="vibration">진동 사용</label>
+                    <select id="vibration">
+                        <option value="true">사용함</option>
+                        <option value="false">사용 안함</option>
                     </select>
                 </div>
             </div>
-
-            <div id="gps-warning" class="warning-message">
-                <!-- JavaScript에서 동적으로 내용 생성 -->
-            </div>
-
-            <div class="info-panel">
-                <h3>📊 모니터링 정보</h3>
-                <div class="info-item">
-                    <span>상태:</span>
-                    <span id="monitoring-status">대기 중</span>
-                </div>
-                <div class="info-item">
-                    <span>경고 상태:</span>
-                    <span id="warning-status">안전</span>
-                </div>
-                <div class="info-item">
-                    <span>갱신 주기:</span>
-                    <span id="current-interval">30초</span>
-                </div>
-                <div class="info-item">
-                    <span>마지막 업데이트:</span>
-                    <span id="last-update">-</span>
-                </div>
-                <div class="info-item">
-                    <span>근처 역 수:</span>
-                    <span id="nearby-stations-count">0</span>
-                </div>
-                <div class="info-item">
-                    <span>감지된 철도 노선:</span>
-                    <span id="detected-lines">0개</span>
-                </div>
-            </div>
-
-            <div id="nearby-stations" class="nearby-stations" style="display:none;">
-                <h4>🔍 근처 지하철역</h4>
-                <div id="stations-list"></div>
-            </div>
         </div>
-
-        <!-- 수동 선택 모드 -->
-        <div id="manual-mode" class="content-section">
-            <div class="status-card">
-                <div id="manual-status-indicator" class="status-indicator status-safe">📍</div>
-                <h3 id="manual-status-text">위치를 선택해주세요</h3>
-                <p>지도에서 모니터링할 위치를 클릭하세요</p>
-            </div>
-
+        
+        <div class="map-container">
             <div id="map"></div>
-
-            <div class="control-panel">
-                <button id="start-manual-monitoring" class="button btn-primary" disabled>선택한 위치 모니터링</button>
-                <button id="stop-manual-monitoring" class="button btn-danger" style="display:none;">모니터링 중지</button>
-                
-                <div style="margin-top: 15px;">
-                    <label for="manual-alert-distance">경고 거리 (미터):</label>
-                    <input type="number" id="manual-alert-distance" class="distance-input" value="500" min="100" max="2000">
-                    
-                    <label for="manual-update-interval">갱신 주기:</label>
-                    <select id="manual-update-interval" class="distance-input" style="height: 50px;">
-                        <option value="5000">⚡ 5초 (고성능)</option>
-                        <option value="10000">🔥 10초 (빠름)</option>
-                        <option value="20000">⚖️ 20초 (균형)</option>
-                        <option value="30000" selected>🔋 30초 (절약)</option>
-                        <option value="60000">💤 60초 (저전력)</option>
-                    </select>
-                </div>
+        </div>
+        
+        <div class="status">
+            <h3>📊 시스템 상태</h3>
+            <div class="status-item">
+                <span class="status-label">현재 모드:</span>
+                <span id="currentMode" class="status-value">대기 중</span>
             </div>
-
-            <div id="manual-warning" class="warning-message">
-                <!-- JavaScript에서 동적으로 내용 생성 -->
+            <div class="status-item">
+                <span class="status-label">GPS 상태:</span>
+                <span id="gpsStatus" class="status-value">비활성</span>
             </div>
-
-            <div class="info-panel">
-                <h3>📊 모니터링 정보</h3>
-                <div class="info-item">
-                    <span>상태:</span>
-                    <span id="manual-monitoring-status">대기 중</span>
-                </div>
-                <div class="info-item">
-                    <span>경고 상태:</span>
-                    <span id="manual-warning-status">안전</span>
-                </div>
-                <div class="info-item">
-                    <span>갱신 주기:</span>
-                    <span id="manual-current-interval">30초</span>
-                </div>
-                <div class="info-item">
-                    <span>마지막 업데이트:</span>
-                    <span id="manual-last-update">-</span>
-                </div>
-                <div class="info-item">
-                    <span>근처 역 수:</span>
-                    <span id="manual-nearby-stations-count">0</span>
-                </div>
-                <div class="info-item">
-                    <span>감지된 철도 노선:</span>
-                    <span id="manual-detected-lines">0개</span>
-                </div>
+            <div class="status-item">
+                <span class="status-label">현재 위치:</span>
+                <span id="currentPosition" class="status-value">위치 정보 없음</span>
             </div>
-
-            <div class="info-panel">
-                <h3>📍 선택한 위치</h3>
-                <div class="info-item">
-                    <span>위도:</span>
-                    <span id="selected-lat">-</span>
-                </div>
-                <div class="info-item">
-                    <span>경도:</span>
-                    <span id="selected-lng">-</span>
-                </div>
-                <div class="info-item">
-                    <span>주소:</span>
-                    <span id="selected-address">-</span>
-                </div>
+            <div class="status-item">
+                <span class="status-label">마지막 업데이트:</span>
+                <span id="lastUpdate" class="status-value">-</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">근처 기차 수:</span>
+                <span id="nearbyTrains" class="status-value">0</span>
             </div>
         </div>
-
-        <div class="train-list" id="train-list" style="display:none;">
-            <h3>🚆 실시간 열차 정보</h3>
-            <div id="train-items"></div>
-        </div>
-
-        <div id="error-display" class="error-message" style="display:none;"></div>
-
-        <div class="footer">
-            <p>안전을 위한 참고용으로만 사용해주세요</p>
-            <p>© 2025 Train Safety Alert System</p>
+        
+        <div class="train-info" id="trainInfo" style="display: none;">
+            <h4>🚊 근처 기차 정보</h4>
+            <div id="trainList"></div>
         </div>
     </div>
+    
+    <div id="alertModal" class="alert">
+        <h2>⚠️ 기차 접근 경고!</h2>
+        <p id="alertMessage">근처에 기차가 접근하고 있습니다!</p>
+        <button class="btn" onclick="hideAlert()">확인</button>
+    </div>
 
-    <!-- 오디오 요소 (알람음) -->
-    <audio id="alarm-sound" preload="auto" loop>
-        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMe" type="audio/wav">
-    </audio>
-
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-            crossorigin=""></script>
-
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         // 전역 변수
-        let currentPosition = null;
-        let selectedPosition = null;
-        let map = null;
-        let marker = null;
-        let monitoringInterval = null;
-        let isMonitoring = false;
-        let alarmSound = null;
-        let nearbyStations = [];
+        let map;
+        let currentLocationMarker;
+        let manualMarker;
+        let gpsWatchId;
+        let isGpsActive = false;
+        let isManualMode = false;
+        let trainMarkers = [];
+        let alertAudio;
+        let monitoringInterval;
         
-        // 경고 상태 관리
-        let currentWarningState = {
-            isActive: false,
-            lastWarningTrain: null,
-            warningStartTime: null,
-            lastUpdateTime: null
-        };
-
-        // API 키들
-        const API_KEYS = {
-            subway: '4a4d5943506f73633531764f4d6854',
-            korail: 'b94e2e220ed1c348f7fe613a70da4ac557a1888a5d25f0e6e3d0e91e41ce4618'
-        };
-
-        // 서울 지하철역 + 코레일 주요 역 데이터 (지하철역 대폭 확장)
-        const TRAIN_STATIONS = [
-            // === 1호선 주요역 ===
-            {name: '서울역', lat: 37.5547, lng: 126.9706, lines: ['1호선', 'KTX', '공항철도'], type: 'both'},
-            {name: '종각', lat: 37.5699, lng: 126.9825, lines: ['1호선'], type: 'subway'},
-            {name: '종로3가', lat: 37.5714, lng: 126.9910, lines: ['1호선', '3호선', '5호선'], type: 'subway'},
-            {name: '동대문', lat: 37.5714, lng: 127.0098, lines: ['1호선', '4호선'], type: 'subway'},
-            {name: '신설동', lat: 37.5751, lng: 127.0255, lines: ['1호선'], type: 'subway'},
-            {name: '영등포', lat: 37.5150, lng: 126.9076, lines: ['1호선'], type: 'subway'},
-            {name: '구로', lat: 37.5033, lng: 126.8817, lines: ['1호선'], type: 'subway'},
-            {name: '인천', lat: 37.4436, lng: 126.6434, lines: ['1호선'], type: 'subway'},
-            
-            // === 2호선 주요역 ===
-            {name: '시청', lat: 37.5659, lng: 126.9777, lines: ['1호선', '2호선'], type: 'subway'},
-            {name: '을지로입구', lat: 37.5663, lng: 126.9820, lines: ['2호선'], type: 'subway'},
-            {name: '을지로3가', lat: 37.5660, lng: 126.9911, lines: ['2호선', '3호선'], type: 'subway'},
-            {name: '동대문역사문화공원', lat: 37.5665, lng: 127.0078, lines: ['2호선', '4호선', '5호선'], type: 'subway'},
-            {name: '신당', lat: 37.5662, lng: 127.0177, lines: ['2호선', '6호선'], type: 'subway'},
-            {name: '성수', lat: 37.5448, lng: 127.0557, lines: ['2호선'], type: 'subway'},
-            {name: '건대입구', lat: 37.5403, lng: 127.0701, lines: ['2호선', '7호선'], type: 'subway'},
-            {name: '강변', lat: 37.5353, lng: 127.0944, lines: ['2호선'], type: 'subway'},
-            {name: '잠실나루', lat: 37.5203, lng: 127.1038, lines: ['2호선'], type: 'subway'},
-            {name: '잠실', lat: 37.5134, lng: 127.1000, lines: ['2호선', '8호선'], type: 'subway'},
-            {name: '종합운동장', lat: 37.5109, lng: 127.0732, lines: ['2호선', '9호선'], type: 'subway'},
-            {name: '삼성', lat: 37.5086, lng: 127.0633, lines: ['2호선'], type: 'subway'},
-            {name: '선릉', lat: 37.5045, lng: 127.0493, lines: ['2호선', '분당선'], type: 'subway'},
-            {name: '역삼', lat: 37.4996, lng: 127.0364, lines: ['2호선'], type: 'subway'},
-            {name: '강남', lat: 37.4979, lng: 127.0276, lines: ['2호선', '신분당선'], type: 'subway'},
-            {name: '교대', lat: 37.4938, lng: 127.0146, lines: ['2호선', '3호선'], type: 'subway'},
-            {name: '서초', lat: 37.4837, lng: 127.0054, lines: ['2호선'], type: 'subway'},
-            {name: '방배', lat: 37.4813, lng: 126.9976, lines: ['2호선'], type: 'subway'},
-            {name: '사당', lat: 37.4767, lng: 126.9814, lines: ['2호선', '4호선'], type: 'subway'},
-            {name: '신림', lat: 37.4844, lng: 126.9295, lines: ['2호선'], type: 'subway'},
-            {name: '구로디지털단지', lat: 37.4853, lng: 126.9012, lines: ['2호선'], type: 'subway'},
-            {name: '신도림', lat: 37.5089, lng: 126.8912, lines: ['1호선', '2호선'], type: 'subway'},
-            {name: '당산', lat: 37.5344, lng: 126.9024, lines: ['2호선', '9호선'], type: 'subway'},
-            {name: '합정', lat: 37.5497, lng: 126.9135, lines: ['2호선', '6호선'], type: 'subway'},
-            {name: '홍대입구', lat: 37.5574, lng: 126.9233, lines: ['2호선', '6호선', '공항철도'], type: 'subway'},
-            {name: '신촌', lat: 37.5556, lng: 126.9364, lines: ['2호선'], type: 'subway'},
-            {name: '이대', lat: 37.5563, lng: 126.9464, lines: ['2호선'], type: 'subway'},
-            
-            // === 3호선 주요역 ===
-            {name: '대화', lat: 37.6585, lng: 126.7670, lines: ['3호선'], type: 'subway'},
-            {name: '불광', lat: 37.6108, lng: 126.9298, lines: ['3호선', '6호선'], type: 'subway'},
-            {name: '연신내', lat: 37.6186, lng: 126.9210, lines: ['3호선'], type: 'subway'},
-            {name: '독립문', lat: 37.5742, lng: 126.9567, lines: ['3호선'], type: 'subway'},
-            {name: '경복궁', lat: 37.5759, lng: 126.9732, lines: ['3호선'], type: 'subway'},
-            {name: '안국', lat: 37.5760, lng: 126.9852, lines: ['3호선'], type: 'subway'},
-            {name: '충무로', lat: 37.5614, lng: 126.9936, lines: ['3호선', '4호선'], type: 'subway'},
-            {name: '동국대입구', lat: 37.5584, lng: 126.9988, lines: ['3호선'], type: 'subway'},
-            {name: '고속터미널', lat: 37.5044, lng: 127.0051, lines: ['3호선', '7호선', '9호선'], type: 'subway'},
-            {name: '남부터미널', lat: 37.4766, lng: 127.0037, lines: ['3호선'], type: 'subway'},
-            {name: '양재', lat: 37.4674, lng: 127.0347, lines: ['3호선'], type: 'subway'},
-            
-            // === 4호선 주요역 ===
-            {name: '명동', lat: 37.5634, lng: 126.9864, lines: ['4호선'], type: 'subway'},
-            {name: '회현', lat: 37.5592, lng: 126.9783, lines: ['4호선'], type: 'subway'},
-            {name: '서울역', lat: 37.5547, lng: 126.9706, lines: ['1호선', '4호선', 'KTX'], type: 'both'},
-            {name: '이촌', lat: 37.5342, lng: 126.9675, lines: ['4호선'], type: 'subway'},
-            {name: '동작', lat: 37.5020, lng: 126.9788, lines: ['4호선'], type: 'subway'},
-            {name: '이수', lat: 37.4862, lng: 126.9816, lines: ['4호선'], type: 'subway'},
-            
-            // === 5호선 주요역 ===
-            {name: '김포공항', lat: 37.5588, lng: 126.8014, lines: ['5호선', '9호선', '공항철도'], type: 'subway'},
-            {name: '송정', lat: 37.5616, lng: 126.8134, lines: ['5호선'], type: 'subway'},
-            {name: '마곡', lat: 37.5608, lng: 126.8250, lines: ['5호선'], type: 'subway'},
-            {name: '발산', lat: 37.5587, lng: 126.8370, lines: ['5호선'], type: 'subway'},
-            {name: '우장산', lat: 37.5485, lng: 126.8361, lines: ['5호선'], type: 'subway'},
-            {name: '화곡', lat: 37.5413, lng: 126.8396, lines: ['5호선'], type: 'subway'},
-            {name: '까치산', lat: 37.5312, lng: 126.8469, lines: ['5호선'], type: 'subway'},
-            {name: '신정', lat: 37.5248, lng: 126.8567, lines: ['5호선'], type: 'subway'},
-            {name: '목동', lat: 37.5268, lng: 126.8750, lines: ['5호선'], type: 'subway'},
-            {name: '오목교', lat: 37.5245, lng: 126.8957, lines: ['5호선'], type: 'subway'},
-            {name: '양평', lat: 37.5345, lng: 126.8905, lines: ['5호선'], type: 'subway'},
-            {name: '영등포구청', lat: 37.5245, lng: 126.8957, lines: ['2호선', '5호선'], type: 'subway'},
-            {name: '여의도', lat: 37.5217, lng: 126.9244, lines: ['5호선'], type: 'subway'},
-            {name: '마포', lat: 37.5444, lng: 126.9458, lines: ['5호선'], type: 'subway'},
-            {name: '공덕', lat: 37.5443, lng: 126.9490, lines: ['5호선', '6호선'], type: 'subway'},
-            {name: '애오개', lat: 37.5515, lng: 126.9565, lines: ['5호선'], type: 'subway'},
-            {name: '충정로', lat: 37.5596, lng: 126.9635, lines: ['2호선', '5호선'], type: 'subway'},
-            {name: '서대문', lat: 37.5656, lng: 126.9662, lines: ['5호선'], type: 'subway'},
-            {name: '광화문', lat: 37.5715, lng: 126.9769, lines: ['5호선'], type: 'subway'},
-            {name: '동대문역사문화공원', lat: 37.5665, lng: 127.0078, lines: ['2호선', '4호선', '5호선'], type: 'subway'},
-            {name: '청구', lat: 37.5606, lng: 127.0149, lines: ['5호선'], type: 'subway'},
-            {name: '왕십리', lat: 37.5617, lng: 127.0378, lines: ['2호선', '5호선', '분당선'], type: 'subway'},
-            {name: '행당', lat: 37.5575, lng: 127.0437, lines: ['5호선'], type: 'subway'},
-            {name: '답십리', lat: 37.5664, lng: 127.0588, lines: ['5호선'], type: 'subway'},
-            {name: '장한평', lat: 37.5613, lng: 127.0644, lines: ['5호선'], type: 'subway'},
-            {name: '군자', lat: 37.5571, lng: 127.0792, lines: ['5호선'], type: 'subway'},
-            {name: '아차산', lat: 37.5572, lng: 127.1032, lines: ['5호선'], type: 'subway'},
-            {name: '광나루', lat: 37.5450, lng: 127.1081, lines: ['5호선'], type: 'subway'},
-            {name: '천호', lat: 37.5387, lng: 127.1238, lines: ['5호선'], type: 'subway'},
-            {name: '강동', lat: 37.5278, lng: 127.1316, lines: ['5호선'], type: 'subway'},
-            
-            // === 6호선 주요역 ===
-            {name: '응암', lat: 37.6016, lng: 126.9136, lines: ['6호선'], type: 'subway'},
-            {name: '역촌', lat: 37.5889, lng: 126.9273, lines: ['6호선'], type: 'subway'},
-            {name: '독바위', lat: 37.5824, lng: 126.9342, lines: ['6호선'], type: 'subway'},
-            {name: '연신내', lat: 37.6186, lng: 126.9210, lines: ['3호선', '6호선'], type: 'subway'},
-            {name: '구산', lat: 37.6093, lng: 126.9167, lines: ['6호선'], type: 'subway'},
-            {name: '새절', lat: 37.5931, lng: 126.9251, lines: ['6호선'], type: 'subway'},
-            {name: '증산', lat: 37.5816, lng: 126.9049, lines: ['6호선'], type: 'subway'},
-            {name: '디지털미디어시티', lat: 37.5763, lng: 126.9009, lines: ['6호선'], type: 'subway'},
-            {name: '월드컵경기장', lat: 37.5686, lng: 126.8973, lines: ['6호선'], type: 'subway'},
-            {name: '마포구청', lat: 37.5634, lng: 126.9086, lines: ['6호선'], type: 'subway'},
-            {name: '망원', lat: 37.5555, lng: 126.9105, lines: ['6호선'], type: 'subway'},
-            {name: '상수', lat: 37.5479, lng: 126.9222, lines: ['6호선'], type: 'subway'},
-            {name: '이태원', lat: 37.5346, lng: 126.9947, lines: ['6호선'], type: 'subway'},
-            {name: '한강진', lat: 37.5320, lng: 127.0051, lines: ['6호선'], type: 'subway'},
-            {name: '버티고개', lat: 37.5408, lng: 127.0201, lines: ['6호선'], type: 'subway'},
-            {name: '약수', lat: 37.5543, lng: 127.0097, lines: ['3호선', '6호선'], type: 'subway'},
-            {name: '동묘앞', lat: 37.5713, lng: 127.0153, lines: ['1호선', '6호선'], type: 'subway'},
-            {name: '창신', lat: 37.5754, lng: 127.0174, lines: ['6호선'], type: 'subway'},
-            {name: '보문', lat: 37.5843, lng: 127.0172, lines: ['6호선'], type: 'subway'},
-            {name: '안암', lat: 37.5852, lng: 127.0276, lines: ['6호선'], type: 'subway'},
-            
-            // === 7호선 주요역 ===
-            {name: '장암', lat: 37.6446, lng: 127.0770, lines: ['7호선'], type: 'subway'},
-            {name: '도봉산', lat: 37.6898, lng: 127.0470, lines: ['7호선'], type: 'subway'},
-            {name: '수락산', lat: 37.6479, lng: 127.0774, lines: ['7호선'], type: 'subway'},
-            {name: '마들', lat: 37.6353, lng: 127.0593, lines: ['7호선'], type: 'subway'},
-            {name: '노원', lat: 37.6544, lng: 127.0617, lines: ['4호선', '7호선'], type: 'subway'},
-            {name: '중계', lat: 37.6412, lng: 127.0734, lines: ['7호선'], type: 'subway'},
-            {name: '하계', lat: 37.6362, lng: 127.0694, lines: ['7호선'], type: 'subway'},
-            {name: '공릉', lat: 37.6254, lng: 127.0729, lines: ['7호선'], type: 'subway'},
-            {name: '태릉입구', lat: 37.6178, lng: 127.0754, lines: ['7호선'], type: 'subway'},
-            {name: '먹골', lat: 37.6173, lng: 127.0773, lines: ['7호선'], type: 'subway'},
-            {name: '중화', lat: 37.6100, lng: 127.0778, lines: ['7호선'], type: 'subway'},
-            {name: '상봉', lat: 37.5967, lng: 127.0851, lines: ['7호선', '경의중앙선'], type: 'subway'},
-            {name: '면목', lat: 37.5892, lng: 127.0895, lines: ['7호선'], type: 'subway'},
-            {name: '사가정', lat: 37.5815, lng: 127.0941, lines: ['7호선'], type: 'subway'},
-            {name: '용마산', lat: 37.5743, lng: 127.0988, lines: ['7호선'], type: 'subway'},
-            {name: '중곡', lat: 37.5668, lng: 127.0841, lines: ['7호선'], type: 'subway'},
-            {name: '군자', lat: 37.5571, lng: 127.0792, lines: ['5호선', '7호선'], type: 'subway'},
-            {name: '어린이대공원', lat: 37.5482, lng: 127.0743, lines: ['7호선'], type: 'subway'},
-            {name: '청담', lat: 37.5199, lng: 127.0565, lines: ['7호선'], type: 'subway'},
-            {name: '강남구청', lat: 37.5176, lng: 127.0417, lines: ['7호선'], type: 'subway'},
-            {name: '학동', lat: 37.5143, lng: 127.0312, lines: ['7호선'], type: 'subway'},
-            {name: '논현', lat: 37.5104, lng: 127.0227, lines: ['7호선'], type: 'subway'},
-            {name: '반포', lat: 37.4979, lng: 127.0118, lines: ['7호선'], type: 'subway'},
-            {name: '내방', lat: 37.4918, lng: 126.9967, lines: ['7호선'], type: 'subway'},
-            {name: '이수', lat: 37.4866, lng: 126.9816, lines: ['4호선', '7호선'], type: 'subway'},
-            {name: '남성', lat: 37.4844, lng: 126.9709, lines: ['7호선'], type: 'subway'},
-            {name: '숭실대입구', lat: 37.4964, lng: 126.9575, lines: ['7호선'], type: 'subway'},
-            {name: '상도', lat: 37.5028, lng: 126.9484, lines: ['7호선'], type: 'subway'},
-            {name: '장승배기', lat: 37.5100, lng: 126.9366, lines: ['7호선'], type: 'subway'},
-            {name: '신대방삼거리', lat: 37.4949, lng: 126.9137, lines: ['7호선'], type: 'subway'},
-            {name: '보라매', lat: 37.4939, lng: 126.9258, lines: ['7호선'], type: 'subway'},
-            {name: '대림', lat: 37.4932, lng: 126.8955, lines: ['2호선', '7호선'], type: 'subway'},
-            
-            // === 8호선 주요역 ===
-            {name: '모란', lat: 37.2934, lng: 127.1283, lines: ['8호선'], type: 'subway'},
-            {name: '남한산성입구', lat: 37.4520, lng: 127.1376, lines: ['8호선'], type: 'subway'},
-            {name: '단대오거리', lat: 37.4607, lng: 127.1282, lines: ['8호선'], type: 'subway'},
-            {name: '신흥', lat: 37.4685, lng: 127.1194, lines: ['8호선'], type: 'subway'},
-            {name: '수진', lat: 37.4849, lng: 127.1019, lines: ['8호선'], type: 'subway'},
-            {name: '몽촌토성', lat: 37.5053, lng: 127.0972, lines: ['8호선'], type: 'subway'},
-            {name: '석촌', lat: 37.5051, lng: 127.1059, lines: ['8호선'], type: 'subway'},
-            {name: '송파', lat: 37.5051, lng: 127.1137, lines: ['8호선'], type: 'subway'},
-            {name: '가락시장', lat: 37.4919, lng: 127.1189, lines: ['8호선'], type: 'subway'},
-            {name: '문정', lat: 37.4846, lng: 127.1226, lines: ['8호선'], type: 'subway'},
-            {name: '장지', lat: 37.4784, lng: 127.1264, lines: ['8호선'], type: 'subway'},
-            
-            // === 9호선 주요역 ===
-            {name: '개화', lat: 37.5777, lng: 126.7986, lines: ['9호선'], type: 'subway'},
-            {name: '공항시장', lat: 37.5624, lng: 126.8125, lines: ['9호선'], type: 'subway'},
-            {name: '신방화', lat: 37.5573, lng: 126.8130, lines: ['9호선'], type: 'subway'},
-            {name: '마곡나루', lat: 37.5660, lng: 126.8252, lines: ['9호선'], type: 'subway'},
-            {name: '양천향교', lat: 37.5517, lng: 126.8329, lines: ['9호선'], type: 'subway'},
-            {name: '가양', lat: 37.5614, lng: 126.8547, lines: ['9호선'], type: 'subway'},
-            {name: '증미', lat: 37.5580, lng: 126.8642, lines: ['9호선'], type: 'subway'},
-            {name: '등촌', lat: 37.5504, lng: 126.8606, lines: ['9호선'], type: 'subway'},
-            {name: '염창', lat: 37.5463, lng: 126.8746, lines: ['9호선'], type: 'subway'},
-            {name: '신목동', lat: 37.5374, lng: 126.8746, lines: ['9호선'], type: 'subway'},
-            {name: '선유도', lat: 37.5354, lng: 126.8937, lines: ['9호선'], type: 'subway'},
-            {name: '노량진', lat: 37.5134, lng: 126.9427, lines: ['1호선', '9호선'], type: 'subway'},
-            {name: '노들', lat: 37.5183, lng: 126.9518, lines: ['9호선'], type: 'subway'},
-            {name: '흑석', lat: 37.5056, lng: 126.9615, lines: ['9호선'], type: 'subway'},
-            {name: '동작', lat: 37.5020, lng: 126.9788, lines: ['4호선', '9호선'], type: 'subway'},
-            {name: '구반포', lat: 37.5048, lng: 127.0047, lines: ['9호선'], type: 'subway'},
-            {name: '신논현', lat: 37.5048, lng: 127.0252, lines: ['9호선'], type: 'subway'},
-            {name: '언주', lat: 37.5178, lng: 127.0371, lines: ['9호선'], type: 'subway'},
-            {name: '선정릉', lat: 37.5045, lng: 127.0493, lines: ['2호선', '9호선'], type: 'subway'},
-            {name: '삼전', lat: 37.4971, lng: 127.0830, lines: ['9호선'], type: 'subway'},
-            {name: '석촌고분', lat: 37.5051, lng: 127.1059, lines: ['8호선', '9호선'], type: 'subway'},
-            {name: '석촌', lat: 37.5051, lng: 127.1059, lines: ['8호선', '9호선'], type: 'subway'},
-            {name: '송파나루', lat: 37.5152, lng: 127.1119, lines: ['9호선'], type: 'subway'},
-            {name: '한성백제', lat: 37.5086, lng: 127.1263, lines: ['9호선'], type: 'subway'},
-            {name: '올림픽공원', lat: 37.5152, lng: 127.1365, lines: ['5호선', '9호선'], type: 'subway'},
-            {name: '둔촌오륜', lat: 37.5267, lng: 127.1366, lines: ['9호선'], type: 'subway'},
-            {name: '중앙보훈병원', lat: 37.5346, lng: 127.1363, lines: ['9호선'], type: 'subway'},
-            
-            // === 신림선 (경전철) ===
-            {name: '관악산', lat: 37.4656, lng: 126.9515, lines: ['신림선'], type: 'subway'},
-            {name: '서울대벤처타운', lat: 37.4699, lng: 126.9472, lines: ['신림선'], type: 'subway'},
-            {name: '호암사거리', lat: 37.4741, lng: 126.9433, lines: ['신림선'], type: 'subway'},
-            {name: '서림', lat: 37.4791, lng: 126.9384, lines: ['신림선'], type: 'subway'},
-            {name: '산기대', lat: 37.4823, lng: 126.9349, lines: ['신림선'], type: 'subway'},
-            {name: '신림', lat: 37.4844, lng: 126.9295, lines: ['2호선', '신림선'], type: 'subway'},
-            
-            // === 우이신설선 (경전철) ===
-            {name: '북한산우이', lat: 37.6634, lng: 127.0126, lines: ['우이신설선'], type: 'subway'},
-            {name: '솔밭공원', lat: 37.6593, lng: 127.0099, lines: ['우이신설선'], type: 'subway'},
-            {name: '4.19민주묘지', lat: 37.6532, lng: 127.0095, lines: ['우이신설선'], type: 'subway'},
-            {name: '가오리', lat: 37.6460, lng: 127.0115, lines: ['우이신설선'], type: 'subway'},
-            {name: '화계', lat: 37.6394, lng: 127.0153, lines: ['우이신설선'], type: 'subway'},
-            {name: '삼양', lat: 37.6307, lng: 127.0196, lines: ['우이신설선'], type: 'subway'},
-            {name: '삼양사거리', lat: 37.6265, lng: 127.0218, lines: ['우이신설선'], type: 'subway'},
-            {name: '솔샘', lat: 37.6195, lng: 127.0264, lines: ['우이신설선'], type: 'subway'},
-            {name: '북한산보국문', lat: 37.6138, lng: 127.0307, lines: ['우이신설선'], type: 'subway'},
-            {name: '정릉', lat: 37.6061, lng: 127.0366, lines: ['우이신설선'], type: 'subway'},
-            {name: '성신여대입구', lat: 37.5926, lng: 127.0177, lines: ['4호선', '우이신설선'], type: 'subway'},
-            {name: '보문', lat: 37.5843, lng: 127.0172, lines: ['6호선', '우이신설선'], type: 'subway'},
-            {name: '신설동', lat: 37.5751, lng: 127.0255, lines: ['1호선', '우이신설선'], type: 'subway'},
-            
-            // === 코레일 주요 역 추가 ===
-            {name: '용산역', lat: 37.5297, lng: 126.9645, lines: ['KTX', '새마을호', '무궁화호'], type: 'korail'},
-            {name: '청량리역', lat: 37.5806, lng: 127.0472, lines: ['KTX', 'ITX-청춘', '무궁화호'], type: 'korail'},
-            {name: '수원역', lat: 37.2663, lng: 127.0011, lines: ['KTX', '새마을호', '무궁화호', '1호선'], type: 'both'},
-            {name: '대전역', lat: 36.3315, lng: 127.4344, lines: ['KTX', '새마을호', '무궁화호'], type: 'korail'},
-            {name: '동대구역', lat: 35.8790, lng: 128.6286, lines: ['KTX', '새마을호', '무궁화호'], type: 'korail'},
-            {name: '부산역', lat: 35.1155, lng: 129.0422, lines: ['KTX', '새마을호', '무궁화호'], type: 'korail'},
-            {name: '광주송정역', lat: 35.1401, lng: 126.7935, lines: ['KTX', '새마을호'], type: 'korail'},
-            {name: '목포역', lat: 34.7947, lng: 126.3849, lines: ['KTX', '무궁화호'], type: 'korail'},
-            {name: '강릉역', lat: 37.7635, lng: 128.8989, lines: ['KTX'], type: 'korail'},
-            {name: '포항역', lat: 36.0413, lng: 129.3456, lines: ['새마을호', '무궁화호'], type: 'korail'}
+        // API 키
+        const SEOUL_SUBWAY_API_KEY = '4a4d5943506f73633531764f4d6854';
+        const KORAIL_API_KEY = 'b94e2e220ed1c348f7fe613a70da4ac557a1888a5d25f0e6e3d0e91e41ce4618';
+        
+        // 서울 지하철 역 데이터 (주요 역만 샘플)
+        const seoulSubwayStations = [
+            {name: '강남역', line: '2호선', lat: 37.4979, lng: 127.0276},
+            {name: '홍대입구역', line: '2호선', lat: 37.5579, lng: 126.9245},
+            {name: '서울역', line: '1호선', lat: 37.5547, lng: 126.9707},
+            {name: '종로3가역', line: '1호선', lat: 37.5705, lng: 126.9923},
+            {name: '명동역', line: '4호선', lat: 37.5632, lng: 126.9854},
+            {name: '잠실역', line: '2호선', lat: 37.5133, lng: 127.1000},
+            {name: '신림역', line: '2호선', lat: 37.4843, lng: 126.9297},
+            {name: '사당역', line: '2호선', lat: 37.4767, lng: 126.9815}
         ];
-
-        // 초기화
+        
+        // 코레일 주요역 데이터 (샘플)
+        const korailStations = [
+            {name: '서울역', lat: 37.5547, lng: 126.9707},
+            {name: '용산역', lat: 37.5299, lng: 126.9645},
+            {name: '영등포역', lat: 37.5156, lng: 126.9073},
+            {name: '수원역', lat: 37.2656, lng: 127.0011},
+            {name: '대전역', lat: 36.3315, lng: 127.4344}
+        ];
+        
+        // 페이지 로드 시 초기화
         document.addEventListener('DOMContentLoaded', function() {
-            initializeApp();
+            initMap();
+            initEventListeners();
+            initAudio();
         });
-
-        function initializeApp() {
-            // HTTPS 체크
-            checkHTTPS();
+        
+        // 지도 초기화
+        function initMap() {
+            // 서울 중심으로 지도 생성
+            map = L.map('map').setView([37.5665, 126.9780], 12);
             
-            // 오디오 초기화
-            alarmSound = document.getElementById('alarm-sound');
-            
-            // 지도 초기화
-            initializeMap();
-            
-            // 이벤트 리스너 설정
-            setupEventListeners();
-            
-            // GPS 권한 요청
-            requestLocationPermission();
-        }
-
-        function checkHTTPS() {
-            const httpsWarning = document.getElementById('https-warning');
-            if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
-                httpsWarning.className = 'https-warning show';
-                updateDebugInfo('HTTP 환경에서는 GPS 접근이 제한될 수 있습니다');
-            } else {
-                httpsWarning.className = 'https-warning hide';
-            }
-        }
-
-        function updateDebugInfo(info, extraInfo = '') {
-            const debugDiv = document.getElementById('gps-debug');
-            const debugInfo = document.getElementById('debug-info');
-            const timestamp = new Date().toLocaleTimeString();
-            
-            debugInfo.innerHTML = `
-                <div style="margin-bottom: 5px;"><strong>🔍 ${timestamp}</strong></div>
-                <div>${info}</div>
-                ${extraInfo ? `<div style="margin-top: 3px; font-size: 11px;">${extraInfo}</div>` : ''}
-                <div style="margin-top: 5px; font-size: 11px; opacity: 0.8;">
-                    💡 감지 반경: 8km | 확률: 95-98% | 노선: 10개
-                </div>
-            `;
-            debugDiv.style.display = 'block';
-        }
-
-        function setupEventListeners() {
-            // GPS 모드 버튼들
-            document.getElementById('start-monitoring').addEventListener('click', startGPSMonitoring);
-            document.getElementById('stop-monitoring').addEventListener('click', stopGPSMonitoring);
-            document.getElementById('retry-gps').addEventListener('click', requestLocationPermission);
-            
-            // 수동 모드 버튼들
-            document.getElementById('start-manual-monitoring').addEventListener('click', startManualMonitoring);
-            document.getElementById('stop-manual-monitoring').addEventListener('click', stopManualMonitoring);
-            
-            // 갱신 주기 변경 이벤트
-            document.getElementById('update-interval').addEventListener('change', function() {
-                if (isMonitoring) {
-                    // 모니터링 중이면 즉시 재시작
-                    stopGPSMonitoring();
-                    setTimeout(() => startGPSMonitoring(), 100);
-                }
-            });
-            
-            document.getElementById('manual-update-interval').addEventListener('change', function() {
-                if (isMonitoring) {
-                    // 모니터링 중이면 즉시 재시작
-                    stopManualMonitoring();
-                    setTimeout(() => startManualMonitoring(), 100);
-                }
-            });
-        }
-
-        function switchMode(mode) {
-            // 활성 버튼 변경
-            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
-            
-            // 클릭된 버튼 찾기
-            const buttons = document.querySelectorAll('.mode-btn');
-            buttons.forEach(btn => {
-                if ((mode === 'gps' && btn.textContent.includes('GPS')) ||
-                    (mode === 'manual' && btn.textContent.includes('수동'))) {
-                    btn.classList.add('active');
-                }
-            });
-            
-            // 컨텐츠 섹션 변경
-            document.querySelectorAll('.content-section').forEach(section => {
-                section.classList.remove('active');
-            });
-            
-            if (mode === 'gps') {
-                document.getElementById('gps-mode').classList.add('active');
-            } else {
-                document.getElementById('manual-mode').classList.add('active');
-            }
-            
-            // 기존 모니터링 중지
-            if (isMonitoring) {
-                stopAllMonitoring();
-            }
-        }
-
-        function switchMode(mode) {
-            // 활성 버튼 변경
-            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-            
-            // 컨텐츠 섹션 변경
-            document.querySelectorAll('.content-section').forEach(section => {
-                section.classList.remove('active');
-            });
-            
-            if (mode === 'gps') {
-                document.getElementById('gps-mode').classList.add('active');
-            } else {
-                document.getElementById('manual-mode').classList.add('active');
-            }
-            
-            // 기존 모니터링 중지
-            if (isMonitoring) {
-                stopAllMonitoring();
-            }
-        }
-
-        function initializeMap() {
-            // Leaflet 지도 초기화
-            map = L.map('map').setView([37.5665, 126.9780], 10);
-
-            // OpenStreetMap 타일 추가
+            // OpenStreetMap 타일 레이어 추가
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap contributors'
             }).addTo(map);
-
-            // 지도 클릭 이벤트
+            
+            // 지하철역 마커 추가
+            seoulSubwayStations.forEach(station => {
+                L.marker([station.lat, station.lng])
+                    .addTo(map)
+                    .bindPopup(`🚇 ${station.name} (${station.line})`);
+            });
+            
+            // 코레일역 마커 추가
+            korailStations.forEach(station => {
+                L.marker([station.lat, station.lng])
+                    .addTo(map)
+                    .bindPopup(`🚄 ${station.name}`);
+            });
+            
+            // 지도 클릭 이벤트 (수동 모드에서 사용)
             map.on('click', function(e) {
-                setSelectedPosition(e.latlng.lat, e.latlng.lng);
-            });
-
-            // 기차역들 마커 추가
-            TRAIN_STATIONS.forEach(station => {
-                let markerColor = '#2196F3';
-                let markerSize = 8;
-                
-                if (station.type === 'korail') {
-                    markerColor = '#FF5722';
-                    markerSize = 10;
-                } else if (station.type === 'both') {
-                    markerColor = '#9C27B0';
-                    markerSize = 12;
+                if (isManualMode) {
+                    setManualLocation(e.latlng.lat, e.latlng.lng);
                 }
-                
-                const stationMarker = L.marker([station.lat, station.lng])
-                    .bindPopup(`<b>${station.name}</b><br>${station.lines.join(', ')}<br><small>(${station.type === 'subway' ? '지하철/경전철' : station.type === 'korail' ? '코레일' : '지하철+코레일'})</small>`)
-                    .addTo(map);
-                
-                // 역 타입별 다른 아이콘
-                stationMarker.setIcon(L.divIcon({
-                    html: `<div style="background:${markerColor};width:${markerSize}px;height:${markerSize}px;border-radius:50%;border:2px solid white;"></div>`,
-                    iconSize: [markerSize + 4, markerSize + 4],
-                    className: 'train-station-marker'
-                }));
             });
         }
-
-        function requestLocationPermission() {
-            // 1단계: 기본 지원 여부 확인
+        
+        // 이벤트 리스너 초기화
+        function initEventListeners() {
+            document.getElementById('startGpsBtn').addEventListener('click', startGpsTracking);
+            document.getElementById('stopGpsBtn').addEventListener('click', stopGpsTracking);
+            document.getElementById('manualModeBtn').addEventListener('click', toggleManualMode);
+            document.getElementById('clearMarkersBtn').addEventListener('click', clearMarkers);
+        }
+        
+        // 오디오 초기화
+        function initAudio() {
+            alertAudio = new Audio();
+        }
+        
+        // GPS 추적 시작
+        function startGpsTracking() {
             if (!navigator.geolocation) {
-                updateGPSStatus('GPS 미지원', '이 브라우저는 GPS를 지원하지 않습니다');
-                updateDebugInfo(`
-                    ❌ Geolocation API 미지원<br>
-                    브라우저: ${navigator.userAgent}<br>
-                    해결방법: Chrome, Firefox, Safari 등 최신 브라우저 사용
-                `);
-                document.getElementById('retry-gps').style.display = 'block';
+                alert('이 브라우저는 GPS를 지원하지 않습니다.');
                 return;
             }
-
-            // 2단계: HTTPS 환경 확인
-            if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
-                updateGPSStatus('HTTPS 필요', 'GPS는 HTTPS 환경에서만 작동합니다');
-                updateDebugInfo(`
-                    🔒 HTTP 환경에서는 GPS 차단됨<br>
-                    현재: ${location.protocol}//${location.hostname}<br>
-                    해결방법: HTTPS 사이트에서 실행하거나 GitHub Pages 사용
-                `);
-                document.getElementById('retry-gps').style.display = 'block';
-                return;
-            }
-
-            document.getElementById('gps-status-text').textContent = 'GPS 권한 요청 중...';
-            updateDebugInfo('🔍 GPS 권한 요청 시작...');
             
-            // 3단계: 여러 옵션으로 순차 시도
-            const highAccuracyOptions = {
+            const options = {
                 enableHighAccuracy: true,
-                timeout: 30000,      // 30초로 늘림
-                maximumAge: 60000    // 1분까지 캐시 허용
-            };
-
-            const lowAccuracyOptions = {
-                enableHighAccuracy: false,
-                timeout: 15000,
-                maximumAge: 300000
-            };
-
-            const fallbackOptions = {
-                enableHighAccuracy: false,
                 timeout: 10000,
-                maximumAge: 600000   // 10분까지 허용
+                maximumAge: 60000
             };
-
-            // 첫 번째 시도: 고정확도
-            console.log('🎯 첫 번째 시도: 고정확도 GPS');
-            updateDebugInfo('🎯 1단계: 고정확도 GPS 시도 중...');
             
-            navigator.geolocation.getCurrentPosition(
-                // 성공 콜백
-                function(position) {
-                    console.log('✅ GPS 성공:', position);
-                    handleGPSSuccess(position);
-                },
-                // 실패 시 두 번째 시도
-                function(error) {
-                    console.log('⚠️ 고정확도 실패, 저정확도 시도:', error);
-                    updateDebugInfo('⚠️ 1단계 실패, 2단계: 저정확도 GPS 시도...');
-                    
-                    navigator.geolocation.getCurrentPosition(
-                        function(position) {
-                            console.log('✅ 저정확도 GPS 성공:', position);
-                            handleGPSSuccess(position);
-                        },
-                        // 두 번째도 실패 시 세 번째 시도
-                        function(error2) {
-                            console.log('⚠️ 저정확도도 실패, 마지막 시도:', error2);
-                            updateDebugInfo('⚠️ 2단계 실패, 3단계: 캐시된 위치 시도...');
-                            
-                            navigator.geolocation.getCurrentPosition(
-                                function(position) {
-                                    console.log('✅ 캐시 GPS 성공:', position);
-                                    handleGPSSuccess(position);
-                                },
-                                // 모든 시도 실패
-                                function(finalError) {
-                                    console.error('❌ 모든 GPS 시도 실패:', finalError);
-                                    handleGPSError(finalError);
-                                },
-                                fallbackOptions
-                            );
-                        },
-                        lowAccuracyOptions
-                    );
-                },
-                highAccuracyOptions
+            gpsWatchId = navigator.geolocation.watchPosition(
+                onLocationUpdate,
+                onLocationError,
+                options
             );
+            
+            isGpsActive = true;
+            isManualMode = false;
+            updateUI();
+            startMonitoring();
         }
-
-        function handleGPSSuccess(position) {
-            currentPosition = {
-                lat: position.coords.latitude,
-                lng: position.coords.longitude,
-                accuracy: position.coords.accuracy
-            };
+        
+        // GPS 추적 중지
+        function stopGpsTracking() {
+            if (gpsWatchId) {
+                navigator.geolocation.clearWatch(gpsWatchId);
+                gpsWatchId = null;
+            }
             
-            const coords = position.coords;
-            updateGPSStatus('✅ 위치 확인 완료', `위도: ${currentPosition.lat.toFixed(6)}, 경도: ${currentPosition.lng.toFixed(6)}`);
-            
-            updateDebugInfo(`
-                ✅ GPS 수신 성공!<br>
-                📍 위도: ${coords.latitude.toFixed(6)}<br>
-                📍 경도: ${coords.longitude.toFixed(6)}<br>
-                🎯 정확도: ${Math.round(coords.accuracy)}m<br>
-                ⏰ 시간: ${new Date(position.timestamp).toLocaleTimeString()}<br>
-                🏔️ 고도: ${coords.altitude ? Math.round(coords.altitude) + 'm' : 'N/A'}<br>
-                💨 속도: ${coords.speed ? Math.round(coords.speed * 3.6) + 'km/h' : 'N/A'}<br>
-                🧭 방향: ${coords.heading ? Math.round(coords.heading) + '°' : 'N/A'}
-            `);
-            
-            findNearbyStations(currentPosition);
-            document.getElementById('retry-gps').style.display = 'none';
-            
-            // 모니터링 버튼 활성화
-            document.getElementById('start-monitoring').disabled = false;
+            isGpsActive = false;
+            updateUI();
+            stopMonitoring();
         }
-
-        function handleGPSError(error) {
-            let errorMsg = 'GPS 오류: ';
-            let solution = '';
-            let debugMsg = '';
+        
+        // 수동 모드 토글
+        function toggleManualMode() {
+            isManualMode = !isManualMode;
             
+            if (isManualMode) {
+                stopGpsTracking();
+                alert('지도를 클릭하여 위치를 설정하세요.');
+            } else {
+                if (manualMarker) {
+                    map.removeLayer(manualMarker);
+                    manualMarker = null;
+                }
+                stopMonitoring();
+            }
+            
+            updateUI();
+        }
+        
+        // 수동 위치 설정
+        function setManualLocation(lat, lng) {
+            if (manualMarker) {
+                map.removeLayer(manualMarker);
+            }
+            
+            manualMarker = L.marker([lat, lng], {
+                icon: L.icon({
+                    iconUrl: 'data:image/svg+xml;base64,' + btoa(`
+                        <svg width="25" height="25" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="12.5" cy="12.5" r="10" fill="#ff4757" stroke="#fff" stroke-width="2"/>
+                            <text x="12.5" y="17" text-anchor="middle" fill="white" font-size="12">📍</text>
+                        </svg>
+                    `),
+                    iconSize: [25, 25],
+                    iconAnchor: [12.5, 12.5]
+                })
+            }).addTo(map);
+            
+            manualMarker.bindPopup('🏃 현재 설정된 위치').openPopup();
+            
+            // 위치 정보 업데이트
+            updateCurrentPosition(lat, lng);
+            startMonitoring();
+        }
+        
+        // 위치 업데이트 콜백
+        function onLocationUpdate(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            
+            updateCurrentPosition(lat, lng);
+            
+            // 현재 위치 마커 업데이트
+            if (currentLocationMarker) {
+                map.removeLayer(currentLocationMarker);
+            }
+            
+            currentLocationMarker = L.marker([lat, lng], {
+                icon: L.icon({
+                    iconUrl: 'data:image/svg+xml;base64,' + btoa(`
+                        <svg width="25" height="25" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="12.5" cy="12.5" r="10" fill="#4facfe" stroke="#fff" stroke-width="2"/>
+                            <text x="12.5" y="17" text-anchor="middle" fill="white" font-size="12">📍</text>
+                        </svg>
+                    `),
+                    iconSize: [25, 25],
+                    iconAnchor: [12.5, 12.5]
+                })
+            }).addTo(map);
+            
+            currentLocationMarker.bindPopup('🏃 현재 위치').openPopup();
+            
+            // 지도 중심을 현재 위치로 이동
+            map.setView([lat, lng], 14);
+        }
+        
+        // 위치 에러 콜백
+        function onLocationError(error) {
+            let message = '위치 정보를 가져올 수 없습니다: ';
             switch(error.code) {
                 case error.PERMISSION_DENIED:
-                    errorMsg += '위치 권한이 거부되었습니다';
-                    debugMsg = `PERMISSION_DENIED (${error.code})`;
-                    solution = `
-                        🔧 해결 방법:<br>
-                        1️⃣ 브라우저 주소창 왼쪽 🔒 또는 📍 아이콘 클릭<br>
-                        2️⃣ '위치' 또는 'Location'을 '허용'으로 변경<br>
-                        3️⃣ 페이지 새로고침 후 재시도<br>
-                        4️⃣ Chrome: 설정 > 개인정보 > 사이트 설정 > 위치<br>
-                        5️⃣ 모바일: 브라우저 앱 설정에서 위치 권한 확인
-                    `;
+                    message += '위치 접근 권한이 거부되었습니다.';
                     break;
                 case error.POSITION_UNAVAILABLE:
-                    errorMsg += '위치 정보를 사용할 수 없습니다';
-                    debugMsg = `POSITION_UNAVAILABLE (${error.code})`;
-                    solution = `
-                        🔧 해결 방법:<br>
-                        1️⃣ 기기의 위치 서비스 켜기 (설정 > 개인정보 > 위치 서비스)<br>
-                        2️⃣ 실외에서 시도해보기 (GPS 신호 수신 개선)<br>
-                        3️⃣ WiFi와 모바일 데이터 모두 켜기<br>
-                        4️⃣ 비행기 모드 껐다 켜보기<br>
-                        5️⃣ 다른 위치에서 시도해보기
-                    `;
+                    message += '위치 정보를 사용할 수 없습니다.';
                     break;
                 case error.TIMEOUT:
-                    errorMsg += '위치 요청 시간이 초과되었습니다';
-                    debugMsg = `TIMEOUT (${error.code}) - 30초 내 응답 없음`;
-                    solution = `
-                        🔧 해결 방법:<br>
-                        1️⃣ 실외나 창문 근처에서 재시도<br>
-                        2️⃣ 잠시 후 다시 시도<br>
-                        3️⃣ 다른 브라우저 사용해보기<br>
-                        4️⃣ 기기 재부팅<br>
-                        5️⃣ 네트워크 연결 확인
-                    `;
+                    message += '위치 요청이 시간 초과되었습니다.';
                     break;
                 default:
-                    errorMsg += `알 수 없는 오류 (코드: ${error.code})`;
-                    debugMsg = `UNKNOWN ERROR (${error.code}): ${error.message}`;
-                    solution = `
-                        🔧 일반적인 해결 방법:<br>
-                        1️⃣ 페이지 새로고침<br>
-                        2️⃣ 브라우저 캐시 삭제<br>
-                        3️⃣ 다른 브라우저/기기 시도<br>
-                        4️⃣ 수동 위치 선택 모드 사용<br>
-                        5️⃣ 개발자에게 오류 코드 ${error.code} 신고
-                    `;
+                    message += '알 수 없는 오류가 발생했습니다.';
                     break;
             }
             
-            updateGPSStatus('❌ GPS 실패', errorMsg);
-            updateDebugInfo(`
-                ❌ ${debugMsg}<br>
-                🌐 프로토콜: ${location.protocol}<br>
-                🖥️ 브라우저: ${navigator.userAgent.split('(')[0]}<br>
-                📱 플랫폼: ${navigator.platform}<br><br>
-                ${solution}
-            `);
-            
-            document.getElementById('retry-gps').style.display = 'block';
-            document.getElementById('start-monitoring').disabled = true;
-            
-            console.error('GPS Error Details:', {
-                code: error.code,
-                message: error.message,
-                timestamp: new Date(),
-                url: location.href,
-                userAgent: navigator.userAgent
-            });
+            alert(message);
+            document.getElementById('gpsStatus').textContent = '오류';
         }
-
-        function updateGPSStatus(status, location) {
-            document.getElementById('gps-status-text').textContent = status;
-            document.getElementById('gps-location-text').textContent = location;
+        
+        // 현재 위치 정보 업데이트
+        function updateCurrentPosition(lat, lng) {
+            document.getElementById('currentPosition').textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+            document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
         }
-
-        function setSelectedPosition(lat, lng) {
-            selectedPosition = { lat: lat, lng: lng };
+        
+        // 모니터링 시작
+        function startMonitoring() {
+            const interval = document.getElementById('updateInterval').value * 1000;
             
-            // 기존 마커 제거
-            if (marker) {
-                map.removeLayer(marker);
+            if (monitoringInterval) {
+                clearInterval(monitoringInterval);
             }
             
-            // 새 마커 추가
-            marker = L.marker([lat, lng]).addTo(map);
-            marker.bindPopup('선택한 위치').openPopup();
-            
-            // UI 업데이트
-            document.getElementById('selected-lat').textContent = lat.toFixed(6);
-            document.getElementById('selected-lng').textContent = lng.toFixed(6);
-            document.getElementById('start-manual-monitoring').disabled = false;
-            
-            // 주소는 간단히 좌표로 표시 (Nominatim API 사용 시 역지오코딩 가능)
-            document.getElementById('selected-address').textContent = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-            
-            // 상태 업데이트
-            document.getElementById('manual-status-text').textContent = '위치 선택 완료';
-        }
-
-        function findNearbyStations(position) {
-            nearbyStations = TRAIN_STATIONS.filter(station => {
-                const distance = calculateDistance(position.lat, position.lng, station.lat, station.lng);
-                return distance <= 5000; // 5km 이내
-            }).map(station => ({
-                ...station,
-                distance: calculateDistance(position.lat, position.lng, station.lat, station.lng)
-            })).sort((a, b) => a.distance - b.distance);
-
-            console.log(`🟢 근처 역 ${nearbyStations.length}개 발견:`);
-            nearbyStations.slice(0, 10).forEach(station => {
-                console.log(`   ${station.type === 'subway' ? '🚇' : station.type === 'korail' ? '🚄' : '🚆'} ${station.name}: ${Math.round(station.distance)}m`);
-            });
-
-            document.getElementById('nearby-stations-count').textContent = nearbyStations.length;
-            
-            if (nearbyStations.length > 0) {
-                displayNearbyStations(nearbyStations.slice(0, 10)); // 상위 10개 표시
-                
-                // 지하철역과 코레일역 개수 세기
-                const subwayStations = nearbyStations.filter(s => s.type === 'subway' || s.type === 'both').length;
-                const korailStations = nearbyStations.filter(s => s.type === 'korail' || s.type === 'both').length;
-                
-                updateDebugInfo(
-                    `근처 역: ${nearbyStations.length}개`, 
-                    `🚇 지하철역: ${subwayStations}개, 🚄 코레일역: ${korailStations}개`
-                );
-            } else {
-                updateDebugInfo('근처에 역이 없습니다 (5km 반경)');
-            }
-        }
-
-        function displayNearbyStations(stations) {
-            const nearbyStationsDiv = document.getElementById('nearby-stations');
-            const stationsList = document.getElementById('stations-list');
-            
-            stationsList.innerHTML = '';
-            
-            stations.forEach(station => {
-                const stationDiv = document.createElement('div');
-                stationDiv.className = 'station-item';
-                
-                let typeIcon = '🚇';
-                if (station.type === 'korail') typeIcon = '🚄';
-                if (station.type === 'both') typeIcon = '🚆';
-                
-                stationDiv.innerHTML = `
-                    ${typeIcon} <strong>${station.name}</strong> - ${Math.round(station.distance)}m<br>
-                    <small>${station.lines.join(', ')}</small>
-                `;
-                stationsList.appendChild(stationDiv);
-            });
-            
-            nearbyStationsDiv.style.display = 'block';
-        }
-
-        // 주요 철도 노선과 구간 정보 (대폭 확장)
-        const RAILWAY_LINES = {
-            'KTX_경부선': {
-                name: 'KTX 경부선',
-                stations: [
-                    {name: '서울역', lat: 37.5547, lng: 126.9706, code: 'NAT010000'},
-                    {name: '광명역', lat: 37.4161, lng: 126.8845, code: 'NAT010300'},
-                    {name: '천안아산역', lat: 36.7947, lng: 127.1044, code: 'NAT031700'},
-                    {name: '대전역', lat: 36.3315, lng: 127.4344, code: 'DAE050000'},
-                    {name: '김천구미역', lat: 36.1203, lng: 128.3447, code: 'NAT033100'},
-                    {name: '동대구역', lat: 35.8790, lng: 128.6286, code: 'DGU050000'},
-                    {name: '부산역', lat: 35.1155, lng: 129.0422, code: 'PUS050000'}
-                ],
-                intervals: [19, 25, 30, 45, 20, 55]
-            },
-            'KTX_호남선': {
-                name: 'KTX 호남선', 
-                stations: [
-                    {name: '용산역', lat: 37.5297, lng: 126.9645, code: 'NAT010900'},
-                    {name: '광명역', lat: 37.4161, lng: 126.8845, code: 'NAT010300'},
-                    {name: '천안아산역', lat: 36.7947, lng: 127.1044, code: 'NAT031700'},
-                    {name: '오송역', lat: 36.6131, lng: 127.2950, code: 'NAT032900'},
-                    {name: '광주송정역', lat: 35.1401, lng: 126.7935, code: 'GWJ050000'},
-                    {name: '목포역', lat: 34.7947, lng: 126.3849, code: 'MOP050000'}
-                ],
-                intervals: [30, 25, 15, 85, 35]
-            },
-            '경부선_일반': {
-                name: '경부선 (새마을/무궁화)',
-                stations: [
-                    {name: '서울역', lat: 37.5547, lng: 126.9706, code: 'NAT010000'},
-                    {name: '영등포역', lat: 37.5150, lng: 126.9076, code: 'NAT010700'},
-                    {name: '안양역', lat: 37.4019, lng: 126.9227, code: 'NAT010800'},
-                    {name: '수원역', lat: 37.2663, lng: 127.0011, code: 'NAT031300'},
-                    {name: '평택역', lat: 36.9912, lng: 127.0845, code: 'NAT031600'},
-                    {name: '천안역', lat: 36.8101, lng: 127.1436, code: 'NAT031800'},
-                    {name: '대전역', lat: 36.3315, lng: 127.4344, code: 'DAE050000'}
-                ],
-                intervals: [8, 12, 15, 20, 25, 45]
-            },
-            '경인선': {
-                name: '경인선 (전철)',
-                stations: [
-                    {name: '서울역', lat: 37.5547, lng: 126.9706, code: 'NAT010000'},
-                    {name: '영등포역', lat: 37.5150, lng: 126.9076, code: 'NAT010700'},
-                    {name: '구로역', lat: 37.5033, lng: 126.8817, code: 'NAT010600'},
-                    {name: '부천역', lat: 37.4846, lng: 126.7830, code: 'NAT020100'},
-                    {name: '인천역', lat: 37.4436, lng: 126.6434, code: 'NAT020000'}
-                ],
-                intervals: [12, 8, 15, 20]
-            },
-            '중앙선': {
-                name: '중앙선',
-                stations: [
-                    {name: '청량리역', lat: 37.5806, lng: 127.0472, code: 'NAT014100'},
-                    {name: '망우역', lat: 37.5992, lng: 127.0918, code: 'NAT014200'},
-                    {name: '덕소역', lat: 37.6087, lng: 127.1976, code: 'NAT014400'},
-                    {name: '양평역', lat: 37.4919, lng: 127.4873, code: 'NAT014800'},
-                    {name: '원주역', lat: 37.3422, lng: 127.9473, code: 'NAT015200'},
-                    {name: '제천역', lat: 37.1326, lng: 128.1906, code: 'NAT015600'}
-                ],
-                intervals: [15, 20, 35, 45, 50]
-            },
-            '경의선': {
-                name: '경의선',
-                stations: [
-                    {name: '서울역', lat: 37.5547, lng: 126.9706, code: 'NAT010000'},
-                    {name: '공덕역', lat: 37.5443, lng: 126.9490, code: 'NAT010950'},
-                    {name: '홍대입구역', lat: 37.5574, lng: 126.9233, code: 'NAT011000'},
-                    {name: '일산역', lat: 37.6588, lng: 126.7733, code: 'NAT011200'},
-                    {name: '파주역', lat: 37.7608, lng: 126.7794, code: 'NAT011400'}
-                ],
-                intervals: [8, 10, 25, 15]
-            },
-            '분당선': {
-                name: '분당선',
-                stations: [
-                    {name: '왕십리역', lat: 37.5617, lng: 127.0378, code: 'NAT013800'},
-                    {name: '서현역', lat: 37.3856, lng: 127.1232, code: 'NAT013900'},
-                    {name: '분당역', lat: 37.3595, lng: 127.1072, code: 'NAT014000'},
-                    {name: '수원역', lat: 37.2663, lng: 127.0011, code: 'NAT031300'}
-                ],
-                intervals: [25, 8, 12]
-            },
-            '공항철도': {
-                name: '공항철도',
-                stations: [
-                    {name: '서울역', lat: 37.5547, lng: 126.9706, code: 'NAT010000'},
-                    {name: '홍대입구역', lat: 37.5574, lng: 126.9233, code: 'NAT011000'},
-                    {name: '김포공항역', lat: 37.5588, lng: 126.8014, code: 'NAT012000'},
-                    {name: '인천국제공항역', lat: 37.4439, lng: 126.4516, code: 'NAT012100'}
-                ],
-                intervals: [12, 15, 35]
-            },
-            '신림선': {
-                name: '신림선 (경전철)',
-                stations: [
-                    {name: '관악산역', lat: 37.4656, lng: 126.9515, code: 'SIN010000'},
-                    {name: '서울대벤처타운역', lat: 37.4699, lng: 126.9472, code: 'SIN010100'},
-                    {name: '호암사거리역', lat: 37.4741, lng: 126.9433, code: 'SIN010200'},
-                    {name: '서림역', lat: 37.4791, lng: 126.9384, code: 'SIN010300'},
-                    {name: '산기대역', lat: 37.4823, lng: 126.9349, code: 'SIN010400'},
-                    {name: '신림역', lat: 37.4844, lng: 126.9295, code: 'SIN010500'}
-                ],
-                intervals: [3, 4, 4, 3, 2]
-            },
-            '우이신설선': {
-                name: '우이신설선 (경전철)',
-                stations: [
-                    {name: '북한산우이역', lat: 37.6634, lng: 127.0126, code: 'UI010000'},
-                    {name: '솔밭공원역', lat: 37.6593, lng: 127.0099, code: 'UI010100'},
-                    {name: '4.19민주묘지역', lat: 37.6532, lng: 127.0095, code: 'UI010200'},
-                    {name: '가오리역', lat: 37.6460, lng: 127.0115, code: 'UI010300'},
-                    {name: '화계역', lat: 37.6394, lng: 127.0153, code: 'UI010400'},
-                    {name: '삼양역', lat: 37.6307, lng: 127.0196, code: 'UI010500'},
-                    {name: '삼양사거리역', lat: 37.6265, lng: 127.0218, code: 'UI010600'},
-                    {name: '솔샘역', lat: 37.6195, lng: 127.0264, code: 'UI010700'},
-                    {name: '북한산보국문역', lat: 37.6138, lng: 127.0307, code: 'UI010800'},
-                    {name: '정릉역', lat: 37.6061, lng: 127.0366, code: 'UI010900'},
-                    {name: '성신여대입구역', lat: 37.5926, lng: 127.0177, code: 'UI011000'},
-                    {name: '보문역', lat: 37.5843, lng: 127.0172, code: 'UI011100'},
-                    {name: '신설동역', lat: 37.5751, lng: 127.0255, code: 'UI011200'}
-                ],
-                intervals: [3, 4, 3, 4, 5, 2, 3, 3, 4, 6, 4, 3]
-            }
-        };
-
-        function startGPSMonitoring() {
-            if (!currentPosition) {
-                alert('GPS 위치 정보가 필요합니다');
-                return;
-            }
-            
-            isMonitoring = true;
-            document.getElementById('start-monitoring').style.display = 'none';
-            document.getElementById('stop-monitoring').style.display = 'block';
-            document.getElementById('monitoring-status').textContent = '모니터링 중';
-            
-            // 선택된 갱신 주기 적용
-            const updateInterval = parseInt(document.getElementById('update-interval').value);
-            
-            // 주기적으로 모니터링
             monitoringInterval = setInterval(() => {
-                checkNearbyTrains(currentPosition);
-            }, updateInterval);
+                checkTrainProximity();
+            }, interval);
             
-            // 즉시 한 번 실행
-            checkNearbyTrains(currentPosition);
-            
-            // 갱신 주기 표시
-            updateMonitoringInfo(0, updateInterval, Object.keys(RAILWAY_LINES).length);
+            // 즉시 한 번 체크
+            checkTrainProximity();
         }
-
-        function stopGPSMonitoring() {
-            stopAllMonitoring();
-            document.getElementById('start-monitoring').style.display = 'block';
-            document.getElementById('stop-monitoring').style.display = 'none';
-            document.getElementById('monitoring-status').textContent = '대기 중';
-        }
-
-        function startManualMonitoring() {
-            if (!selectedPosition) {
-                alert('지도에서 위치를 선택해주세요');
-                return;
-            }
-            
-            isMonitoring = true;
-            document.getElementById('start-manual-monitoring').style.display = 'none';
-            document.getElementById('stop-manual-monitoring').style.display = 'block';
-            
-            // 수동 모드 상태 업데이트
-            document.getElementById('manual-monitoring-status').textContent = '모니터링 중';
-            
-            // 선택된 갱신 주기 적용
-            const updateInterval = parseInt(document.getElementById('manual-update-interval').value);
-            
-            // 주기적으로 모니터링
-            monitoringInterval = setInterval(() => {
-                checkNearbyTrains(selectedPosition);
-            }, updateInterval);
-            
-            // 즉시 한 번 실행
-            checkNearbyTrains(selectedPosition);
-        }
-
-        function stopManualMonitoring() {
-            stopAllMonitoring();
-            document.getElementById('start-manual-monitoring').style.display = 'block';
-            document.getElementById('stop-manual-monitoring').style.display = 'none';
-            document.getElementById('manual-monitoring-status').textContent = '대기 중';
-        }
-
-        function stopAllMonitoring() {
-            isMonitoring = false;
+        
+        // 모니터링 중지
+        function stopMonitoring() {
             if (monitoringInterval) {
                 clearInterval(monitoringInterval);
                 monitoringInterval = null;
             }
-            
-            // 경고 상태 초기화
-            hideWarning();
-            stopAlarm();
-            currentWarningState.isActive = false;
-            currentWarningState.lastWarningTrain = null;
-            currentWarningState.warningStartTime = null;
-            currentWarningState.lastUpdateTime = null;
-            
-            document.getElementById('train-list').style.display = 'none';
         }
-
-        async function checkNearbyTrains(position) {
-            const alertDistance = parseInt(
-                document.getElementById('alert-distance').value || 
-                document.getElementById('manual-alert-distance').value
-            );
+        
+        // 기차 근접도 체크
+        async function checkTrainProximity() {
+            let currentLat, currentLng;
             
-            try {
-                // 근처 철도 노선 탐지
-                const nearbyLines = TRAIN_STATIONS.length > 0 ? 
-                    [] : // 기존 역 기반은 사용하지 않음
-                    [];
-
-                // 근처 역들에 대해 실시간 데이터 조회
-                const stationsInRange = nearbyStations.length > 0 ? 
-                    nearbyStations.filter(station => station.distance <= alertDistance * 3) :
-                    TRAIN_STATIONS.filter(station => {
-                        const distance = calculateDistance(position.lat, position.lng, station.lat, station.lng);
-                        return distance <= alertDistance * 3;
-                    }).slice(0, 5);
-
-                let allTrainData = [];
-                let dangerousTrains = [];
-
-                for (const station of stationsInRange.slice(0, 5)) { // 상위 5개 역만 체크
-                    console.log(`🔍 역 체크: ${station.name} (타입: ${station.type})`);
-                    
-                    try {
-                        let trainData = [];
-                        
-                        // 지하철 데이터 조회
-                        if (station.type === 'subway' || station.type === 'both') {
-                            console.log(`🚇 ${station.name} 지하철 데이터 조회 시작`);
-                            const subwayData = await fetchSubwayRealtime(station.name);
-                            trainData = [...trainData, ...subwayData];
-                            console.log(`🚇 ${station.name} 지하철 데이터: ${subwayData.length}개`);
-                        }
-                        
-                        // 코레일 데이터 조회 (철도 노선 기반)
-                        if (station.type === 'korail' || station.type === 'both') {
-                            console.log(`🚄 ${station.name} 코레일 데이터 조회 시작`);
-                            const korailData = await fetchKorailData(station.name, position);
-                            trainData = [...trainData, ...korailData];
-                            console.log(`🚄 ${station.name} 코레일 데이터: ${korailData.length}개`);
-                        }
-                        
-                        allTrainData = [...allTrainData, ...trainData];
-                        console.log(`📊 ${station.name} 총 열차: ${trainData.length}개`);
-                        
-                        // 위험 거리 내 열차 확인
-                        const nearTrains = trainData.filter(train => {
-                            const trainDistance = calculateDistance(position.lat, position.lng, station.lat, station.lng);
-                            const inDanger = trainDistance < alertDistance;
-                            if (inDanger) {
-                                console.log(`⚠️ 위험 열차 발견: ${train.line} (거리: ${Math.round(trainDistance)}m)`);
-                            }
-                            return inDanger;
-                        });
-                        
-                        dangerousTrains = [...dangerousTrains, ...nearTrains];
-                    } catch (error) {
-                        console.error(`⌛ ${station.name} 데이터 조회 오류:`, error);
-                    }
-                }
-
-                console.log(`📊 총 결과: ${allTrainData.length}개 열차 감지, ${dangerousTrains.length}개 위험 열차`);
+            // 현재 위치 가져오기
+            if (isGpsActive && currentLocationMarker) {
+                const pos = currentLocationMarker.getLatLng();
+                currentLat = pos.lat;
+                currentLng = pos.lng;
+            } else if (isManualMode && manualMarker) {
+                const pos = manualMarker.getLatLng();
+                currentLat = pos.lat;
+                currentLng = pos.lng;
+            } else {
+                return;
+            }
+            
+            const alertDistance = parseInt(document.getElementById('alertDistance').value);
+            let nearbyTrainCount = 0;
+            const nearbyTrains = [];
+            
+            // 지하철역과의 거리 체크
+            seoulSubwayStations.forEach(station => {
+                const distance = calculateDistance(currentLat, currentLng, station.lat, station.lng);
                 
-                // 열차 타입별 개수 세기
-                const subwayCount = allTrainData.filter(t => t.type === 'subway').length;
-                const passengerTrainCount = allTrainData.filter(t => t.type === 'korail' && !t.isFreight).length;
-                const freightTrainCount = allTrainData.filter(t => t.type === 'korail' && t.isFreight).length;
-                console.log(`🚇 지하철: ${subwayCount}개, 🚄 여객열차: ${passengerTrainCount}개, 🚛 화물열차: ${freightTrainCount}개`);
-
-                // 경고 처리 - 지속적
+                if (distance <= alertDistance) {
+                    nearbyTrainCount++;
+                    nearbyTrains.push({
+                        name: station.name,
+                        line: station.line,
+                        distance: Math.round(distance),
+                        type: '지하철'
+                    });
+                }
+            });
+            
+            // 코레일역과의 거리 체크
+            korailStations.forEach(station => {
+                const distance = calculateDistance(currentLat, currentLng, station.lat, station.lng);
+                
+                if (distance <= alertDistance) {
+                    nearbyTrainCount++;
+                    nearbyTrains.push({
+                        name: station.name,
+                        distance: Math.round(distance),
+                        type: '일반철도'
+                    });
+                }
+            });
+            
+            // UI 업데이트
+            document.getElementById('nearbyTrains').textContent = nearbyTrainCount;
+            
+            if (nearbyTrains.length > 0) {
+                showTrainInfo(nearbyTrains);
+                
+                // 경고 발생
+                if (nearbyTrains.some(train => train.distance <= alertDistance / 2)) {
+                    triggerAlert(`${nearbyTrains[0].name}까지 ${nearbyTrains[0].distance}m`);
+                }
+            } else {
+                hideTrainInfo();
+            }
+            
+            // 실제 API 호출 (데모용으로 주석 처리)
+            // await fetchSeoulSubwayData();
+            // await fetchKorailData();
+        }
+        
+        // 거리 계산 (하버사인 공식)
+        function calculateDistance(lat1, lng1, lat2, lng2) {
+            const R = 6371e3; // 지구 반지름 (미터)
+            const φ1 = lat1 * Math.PI/180;
+            const φ2 = lat2 * Math.PI/180;
+            const Δφ = (lat2-lat1) * Math.PI/180;
+            const Δλ = (lng2-lng1) * Math.PI/180;
+            
+            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                    Math.cos(φ1) * Math.cos(φ2) *
+                    Math.sin(Δλ/2) * Math.sin(Δλ/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            
+            return R * c;
+        }
+        
+        // 경고 발생
+        function triggerAlert(message) {
+            document.getElementById('alertMessage').textContent = message;
+            document.getElementById('alertModal').style.display = 'block';
+            
+            // 진동
+            if (document.getElementById('vibration').value === 'true' && 'vibrate' in navigator) {
+                navigator.vibrate([500, 200, 500, 200, 500]);
+            }
+            
+            // 소리
+            playAlertSound();
+        }
+        
+        // 경고 소리 재생
+        function playAlertSound() {
+            const soundType = document.getElementById('alertSound').value;
+            let frequency = 800;
+            let duration = 500;
+            
+            switch(soundType) {
+                case 'siren':
+                    frequency = 1000;
+                    duration = 1000;
+                    break;
+                case 'bell':
+                    frequency = 600;
+                    duration = 800;
+                    break;
+                default: // beep
+                    frequency = 800;
+                    duration = 500;
+            }
+            
+            // Web Audio API를 사용한 소리 생성
+            if (typeof(AudioContext) !== "undefined" || typeof(webkitAudioContext) !== "undefined") {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = frequency;
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration/1000);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + duration/1000);
+            }
+        }
+        
+        // 경고 숨기기
+        function hideAlert() {
+            document.getElementById('alertModal').style.display = 'none';
+        }
+        
+        // 기차 정보 표시
+        function showTrainInfo(trains) {
+            const trainInfo = document.getElementById('trainInfo');
+            const trainList = document.getElementById('trainList');
+            
+            trainList.innerHTML = '';
+            
+            trains.forEach(train => {
+                const trainItem = document.createElement('div');
+                trainItem.className = 'train-item';
+                
+                const distanceClass = train.distance <= 200 ? 'distance-warning' : 'distance-safe';
+                
+                trainItem.innerHTML = `
+                    <div>
+                        <strong>${train.name}</strong>
+                        ${train.line ? `<span>(${train.line})</span>` : ''}
+                        <small>[${train.type}]</small>
+                    </div>
+                    <div class="${distanceClass}">${train.distance}m</div>
+                `;
+                
+                trainList.appendChild(trainItem);
+            });
+            
+            trainInfo.style.display = 'block';
+        }
+        
+        // 기차 정보 숨기기
+        function hideTrainInfo() {
+            document.getElementById('trainInfo').style.display = 'none';
+        }
+        
+        // 마커 지우기
+        function clearMarkers() {
+            if (currentLocationMarker) {
+                map.removeLayer(currentLocationMarker);
+                currentLocationMarker = null;
+            }
+            
+            if (manualMarker) {
+                map.removeLayer(manualMarker);
+                manualMarker = null;
+            }
+            
+            trainMarkers.forEach(marker => {
+                map.removeLayer(marker);
+            });
+            trainMarkers = [];
+            
+            stopGpsTracking();
+            isManualMode = false;
+            updateUI();
+        }
+        
+        // UI 업데이트
+        function updateUI() {
+            const startBtn = document.getElementById('startGpsBtn');
+            const stopBtn = document.getElementById('stopGpsBtn');
+            const manualBtn = document.getElementById('manualModeBtn');
+            const currentMode = document.getElementById('currentMode');
+            const gpsStatus = document.getElementById('gpsStatus');
+            
+            if (isGpsActive) {
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+                manualBtn.disabled = true;
+                currentMode.textContent = 'GPS 자동 추적';
+                gpsStatus.textContent = '활성';
+                gpsStatus.style.color = '#2ed573';
+            } else if (isManualMode) {
+                startBtn.disabled = true;
+                stopBtn.disabled = true;
+                manualBtn.disabled = false;
+                manualBtn.textContent = '🏃 수동 모드 (활성)';
+                currentMode.textContent = '수동 위치 설정';
+                gpsStatus.textContent = '비활성';
+                gpsStatus.style.color = '#ff6b6b';
+            } else {
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+                manualBtn.disabled = false;
+                manualBtn.textContent = '📍 수동 위치 설정';
+                currentMode.textContent = '대기 중';
+                gpsStatus.textContent = '비활성';
+                gpsStatus.style.color = '#ff6b6b';
+            }
+        }
+        
+        // 서울시 지하철 API 호출 (실제 구현)
+        async function fetchSeoulSubwayData() {
+            try {
+                const response = await fetch(`http://swopenAPI.seoul.go.kr/api/subway/${SEOUL_SUBWAY_API_KEY}/json/realtimeStationArrival/0/100/`);
+                const data = await response.json();
+                
+                // API 데이터 처리 로직
+                console.log('서울시 지하철 데이터:', data);
+                
+            } catch (error) {
+                console.error('서울시 지하철 API 오류:', error);
+            }
+        }
+        
+        // 코레일 API 호출 (실제 구현)
+        async function fetchKorailData() {
+            try {
+                const response = await fetch(`http://apis.data.go.kr/B551457/run/v2/routeWithWay?serviceKey=${KORAIL_API_KEY}&numOfRows=100&pageNo=1&_type=json`);
+                const data = await response.json();
+                
+                // API 데이터 처리 로직
+                console.log('코레일 데이터:', data);
+                
+            } catch (error) {
+                console.error('코레일 API 오류:', error);
+            }
+        }
+    </script>
+</body>
+</html>
