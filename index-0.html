@@ -645,38 +645,38 @@
         }
     }
 
-    // 모든 역 정보를 가져오는 함수
-    async function fetchAllStations() {
-        console.log("모든 역 정보 로딩 중...");
-        try {
-            // 서울시 지하철 API 호출 (샘플 URL)
-            const seoulUrl = http://swopenAPI.seoul.go.kr/api/subway/{seoulSubwayApiKey}/json/SearchInfoBySubwayNameService/1/1000/`;
-            const seoulResponse = await fetch(seoulUrl);
-            const seoulData = await seoulResponse.json();
+// 모든 역 정보를 가져오는 함수
+async function fetchAllStations() {
+    console.log("모든 역 정보 로딩 중...");
+    try {
+        // 서울시 지하철 API 호출 (수정된 URL)
+        const seoulUrl = `http://swopenAPI.seoul.go.kr/api/subway/${seoulSubwayApiKey}/json/SearchInfoBySubwayNameService/1/1000/`;
+        const seoulResponse = await fetch(seoulUrl);
+        const seoulData = await seoulResponse.json();
 
-            // 코레일 API 호출 (샘플 URL)
-            const korailUrl = `https://apis.data.go.kr/3011000/TrainSttnInfoService/getTrainSttnInfo?serviceKey=${korailApiKey}&pageNo=1&numOfRows=1000&_type=json`;
-            const korailResponse = await fetch(korailUrl);
-            const korailData = await korailResponse.json();
-
-            // API 응답에서 역 정보를 파싱하여 allStations 배열에 추가
-            if (seoulData.SearchInfoBySubwayNameService && seoulData.SearchInfoBySubwayNameService.row) {
-                seoulData.SearchInfoBySubwayNameService.row.forEach(station => {
-                    allStations.push({ name: station.STATION_NM, lat: parseFloat(station.X_COORD), lng: parseFloat(station.Y_COORD), type: 'subway' });
-                });
-            }
-            if (korailData.response && korailData.response.body && korailData.response.body.items && korailData.response.body.items.item) {
-                korailData.response.body.items.item.forEach(station => {
-                    allStations.push({ name: station.sttnNm, lat: parseFloat(station.sttnLat), lng: parseFloat(station.sttnLon), type: 'korail' });
-                });
-            }
-            
-            console.log("모든 역 정보 로딩 완료. 총 역 개수:", allStations.length);
-        } catch (error) {
-            console.error("역 정보 로딩 실패:", error);
-            showError("역 정보를 불러오는 데 실패했습니다. 잠시 후 다시 시도해주세요.");
+        // 코레일 API 호출
+        const korailUrl = `https://apis.data.go.kr/3011000/TrainSttnInfoService/getTrainSttnInfo?serviceKey=${korailApiKey}&pageNo=1&numOfRows=1000&_type=json`;
+        const korailResponse = await fetch(korailUrl);
+        const korailData = await korailResponse.json();
+        
+        // API 응답에서 역 정보를 파싱하여 allStations 배열에 추가
+        if (seoulData.SearchInfoBySubwayNameService && seoulData.SearchInfoBySubwayNameService.row) {
+            seoulData.SearchInfoBySubwayNameService.row.forEach(station => {
+                allStations.push({ name: station.STATION_NM, lat: parseFloat(station.X_COORD), lng: parseFloat(station.Y_COORD), type: 'subway' });
+            });
         }
+        if (korailData.response && korailData.response.body && korailData.response.body.items && korailData.response.body.items.item) {
+            korailData.response.body.items.item.forEach(station => {
+                allStations.push({ name: station.sttnNm, lat: parseFloat(station.sttnLat), lng: parseFloat(station.sttnLon), type: 'korail' });
+            });
+        }
+        
+        console.log("모든 역 정보 로딩 완료. 총 역 개수:", allStations.length);
+    } catch (error) {
+        console.error("역 정보 로딩 실패:", error);
+        showError("역 정보를 불러오는 데 실패했습니다. 잠시 후 다시 시도해주세요.");
     }
+}
 
     // 두 지점 간의 거리 계산 (미터 단위)
     function calculateDistance(lat1, lng1, lat2, lng2) {
