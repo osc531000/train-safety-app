@@ -814,11 +814,16 @@
             {name: '중앙보훈병원', lat: 37.5346, lng: 127.1363, lines: ['9호선'], type: 'subway'},
             
             // === 신림선 (경전철) ===
-            {name: '관악산', lat: 37.4656, lng: 126.9515, lines: ['신림선'], type: 'subway'},
-            {name: '서울대벤처타운', lat: 37.4699, lng: 126.9472, lines: ['신림선'], type: 'subway'},
-            {name: '호암사거리', lat: 37.4741, lng: 126.9433, lines: ['신림선'], type: 'subway'},
-            {name: '서림', lat: 37.4791, lng: 126.9384, lines: ['신림선'], type: 'subway'},
-            {name: '산기대', lat: 37.4823, lng: 126.9349, lines: ['신림선'], type: 'subway'},
+            {name:'샛강역', lat: 37.518173, lng: 126.929871, lines: ['신림선'], type: 'subway'},
+            {name:'대방역', lat: 37.513366, lng: 126.926442, lines: ['신림선'], type: 'subway'},
+            {name:'서울지방병무청역', lat: 37.505706, lng: 126.923838, lines: ['신림선'], type: 'subway'},
+            {name:'보라매공원역', lat: 37.498565, lng: 126.923838, lines: ['신림선'], type: 'subway'}, 
+            {name:'보라매병원역', lat: 37.492778, lng: 126.924167, lines: ['신림선'], type: 'subway'},
+            {name:'당곡역', lat: 37.489167, lng: 126.928056, lines: ['신림선'], type: 'subway'},
+            {name:'신림역', lat: 37.484251, lng: 126.929864, lines: ['신림선'], type: 'subway'},
+            {name:'서원역', lat: 37.478056, lng: 126.933333, lines: ['신림선'], type: 'subway'},
+            {name:'서울대벤처타운역', lat: 37.470535, lng: 126.93874, lines: ['신림선'], type: 'subway'},
+            {name:'관악산역', lat: 37.464673, lng: 126.942911, lines: ['신림선'], type: 'subway'},
             
             // === 우이신설선 (경전철) ===
             {name: '북한산우이', lat: 37.6634, lng: 127.0126, lines: ['우이신설선'], type: 'subway'},
@@ -833,17 +838,153 @@
             {name: '정릉', lat: 37.6061, lng: 127.0366, lines: ['우이신설선'], type: 'subway'},
             {name: '성신여대입구', lat: 37.5926, lng: 127.0177, lines: ['4호선', '우이신설선'], type: 'subway'},
             
-            // === 코레일 주요 역 추가 ===
+            // === 전국 코레일 기차역 (대폭 확장) ===
+
+            // === 수도권 ===
+            {name: '서울역', lat: 37.5547, lng: 126.9706, lines: ['KTX', '새마을호', '무궁화호', 'ITX-새마을'], type: 'korail'},
             {name: '용산역', lat: 37.5297, lng: 126.9645, lines: ['KTX', '새마을호', '무궁화호'], type: 'korail'},
             {name: '청량리역', lat: 37.5806, lng: 127.0472, lines: ['KTX', 'ITX-청춘', '무궁화호'], type: 'korail'},
-            {name: '수원역', lat: 37.2663, lng: 127.0011, lines: ['KTX', '새마을호', '무궁화호', '1호선'], type: 'both'},
+            {name: '영등포역', lat: 37.5150, lng: 126.9076, lines: ['새마을호', '무궁화호'], type: 'korail'},
+            {name: '수원역', lat: 37.2663, lng: 127.0011, lines: ['KTX', '새마을호', '무궁화호'], type: 'korail'},
+            {name: '안양역', lat: 37.4019, lng: 126.9227, lines: ['무궁화호'], type: 'korail'},
+            {name: '의정부역', lat: 37.7386, lng: 127.0477, lines: ['무궁화호'], type: 'korail'},
+            {name: '동두천역', lat: 37.9034, lng: 127.0606, lines: ['무궁화호'], type: 'korail'},
+            {name: '소요산역', lat: 37.9484, lng: 127.0778, lines: ['무궁화호'], type: 'korail'},
+            {name: '덕소역', lat: 37.6133, lng: 127.3161, lines: ['ITX-청춘', '무궁화호'], type: 'korail'},
+            {name: '양평역', lat: 37.4919, lng: 127.4873, lines: ['ITX-청춘', '무궁화호'], type: 'korail'},
+            {name: '용문역', lat: 37.5451, lng: 127.5829, lines: ['ITX-청춘', '무궁화호'], type: 'korail'},
+
+            // === 경기도 ===
+            {name: '평택역', lat: 36.9912, lng: 127.0845, lines: ['KTX', '새마을호', '무궁화호'], type: 'korail'},
+            {name: '천안역', lat: 36.8101, lng: 127.1436, lines: ['KTX', '새마을호', '무궁화호'], type: 'korail'},
+            {name: '천안아산역', lat: 36.7947, lng: 127.1044, lines: ['KTX'], type: 'korail'},
+            {name: '오산역', lat: 37.1477, lng: 127.0773, lines: ['새마을호', '무궁화호'], type: 'korail'},
+            {name: '성환역', lat: 36.9189, lng: 127.1378, lines: ['새마을화'], type: 'korail'},
+            {name: '직산역', lat: 36.8813, lng: 127.1644, lines: ['무궁화호'], type: 'korail'},
+            {name: '두정역', lat: 36.8356, lng: 127.1256, lines: ['무궁화호'], type: 'korail'},
+
+            // === 충청북도 ===
+            {name: '조치원역', lat: 36.5894, lng: 127.2900, lines: ['새마을호', '무궁화호'], type: 'korail'},
+            {name: '청주역', lat: 36.6425, lng: 127.4408, lines: ['무궁화호'], type: 'korail'},
+            {name: '충주역', lat: 36.9748, lng: 127.9364, lines: ['무궁화호'], type: 'korail'},
+            {name: '제천역', lat: 37.1326, lng: 128.1906, lines: ['무궁화호'], type: 'korail'},
+            {name: '단양역', lat: 36.9845, lng: 128.3651, lines: ['무궁화호'], type: 'korail'},
+            {name: '도담역', lat: 36.9389, lng: 128.3267, lines: ['무궁화호'], type: 'korail'},
+
+            // === 충청남도 ===
             {name: '대전역', lat: 36.3315, lng: 127.4344, lines: ['KTX', '새마을호', '무궁화호'], type: 'korail'},
-            {name: '동대구역', lat: 35.8790, lng: 128.6286, lines: ['KTX', '새마을호', '무궁화호'], type: 'korail'},
-            {name: '부산역', lat: 35.1155, lng: 129.0422, lines: ['KTX', '새마을호', '무궁화호'], type: 'korail'},
+            {name: '서대전역', lat: 36.3154, lng: 127.3838, lines: ['무궁화호'], type: 'korail'},
+            {name: '공주역', lat: 36.4465, lng: 127.1189, lines: ['무궁화호'], type: 'korail'},
+            {name: '논산역', lat: 36.1875, lng: 127.0982, lines: ['무궁화호'], type: 'korail'},
+            {name: '강경역', lat: 36.0695, lng: 126.9889, lines: ['무궁화호'], type: 'korail'},
+            {name: '부여역', lat: 36.2756, lng: 126.9100, lines: ['무궁화호'], type: 'korail'},
+            {name: '홍성역', lat: 36.6013, lng: 126.6817, lines: ['무궁화호'], type: 'korail'},
+            {name: '예산역', lat: 36.6789, lng: 126.8456, lines: ['무궁화호'], type: 'korail'},
+            {name: '신례원역', lat: 36.6656, lng: 126.9033, lines: ['무궁화호'], type: 'korail'},
+            {name: '온양온천역', lat: 36.7817, lng: 127.0014, lines: ['무궁화호'], type: 'korail'},
+            {name: '아산역', lat: 36.7947, lng: 127.1044, lines: ['무궁화호'], type: 'korail'},
+
+            // === 전라북도 ===
+            {name: '익산역', lat: 35.9482, lng: 126.9547, lines: ['KTX', '새마을호', '무궁화호'], type: 'korail'},
+            {name: '전주역', lat: 35.8486, lng: 127.1286, lines: ['무궁화호'], type: 'korail'},
+            {name: '정읍역', lat: 35.5697, lng: 126.8658, lines: ['새마을호', '무궁화호'], type: 'korail'},
+            {name: '임실역', lat: 35.6178, lng: 127.2881, lines: ['무궁화호'], type: 'korail'},
+            {name: '순창역', lat: 35.3667, lng: 127.1372, lines: ['무궁화호'], type: 'korail'},
+            {name: '남원역', lat: 35.4172, lng: 127.3906, lines: ['무궁화호'], type: 'korail'},
+            {name: '곡성역', lat: 35.2819, lng: 127.2906, lines: ['무궁화호'], type: 'korail'},
+
+            // === 전라남도 ===
             {name: '광주송정역', lat: 35.1401, lng: 126.7935, lines: ['KTX', '새마을호'], type: 'korail'},
-            {name: '목포역', lat: 34.7947, lng: 126.3849, lines: ['KTX', '무궁화호'], type: 'korail'},
+            {name: '광주역', lat: 35.1472, lng: 126.9161, lines: ['무궁화호'], type: 'korail'},
+            {name: '목포역', lat: 34.7947, lng: 126.3849, lines: ['KTX', '새마을호', '무궁화호'], type: 'korail'},
+            {name: '나주역', lat: 35.0161, lng: 126.7111, lines: ['무궁화호'], type: 'korail'},
+            {name: '함평역', lat: 35.0667, lng: 126.5167, lines: ['무궁화호'], type: 'korail'},
+            {name: '일로역', lat: 34.9289, lng: 126.4506, lines: ['무궁화호'], type: 'korail'},
+            {name: '임성리역', lat: 34.8456, lng: 126.4006, lines: ['무궁화호'], type: 'korail'},
+            {name: '몽탄역', lat: 34.8122, lng: 126.3789, lines: ['무궁화호'], type: 'korail'},
+            {name: '순천역', lat: 34.9508, lng: 127.4878, lines: ['무궁화호'], type: 'korail'},
+            {name: '여천역', lat: 34.8661, lng: 127.7414, lines: ['무궁화호'], type: 'korail'},
+            {name: '광양역', lat: 34.9403, lng: 127.5958, lines: ['무궁화호'], type: 'korail'},
+            {name: '하동역', lat: 35.0661, lng: 127.7514, lines: ['무궁화호'], type: 'korail'},
+
+            // === 경상북도 ===
+            {name: '김천구미역', lat: 36.1203, lng: 128.3447, lines: ['KTX'], type: 'korail'},
+            {name: '김천역', lat: 36.1394, lng: 128.1133, lines: ['새마을호', '무궁화호'], type: 'korail'},
+            {name: '구미역', lat: 36.1194, lng: 128.3456, lines: ['새마을호', '무궁화호'], type: 'korail'},
+            {name: '대구역', lat: 35.8794, lng: 128.6289, lines: ['새마을호', '무궁화호'], type: 'korail'},
+            {name: '동대구역', lat: 35.8790, lng: 128.6286, lines: ['KTX', '새마을호', '무궁화호'], type: 'korail'},
+            {name: '경주역', lat: 35.8394, lng: 129.2278, lines: ['새마을호', '무궁화호'], type: 'korail'},
+            {name: '포항역', lat: 36.0413, lng: 129.3456, lines: ['새마을호', '무궁화호'], type: 'korail'},
+            {name: '안동역', lat: 36.5683, lng: 128.7289, lines: ['무궁화호'], type: 'korail'},
+            {name: '영주역', lat: 36.8056, lng: 128.6228, lines: ['무궁화호'], type: 'korail'},
+            {name: '문경역', lat: 36.7861, lng: 128.1889, lines: ['무궁화호'], type: 'korail'},
+            {name: '점촌역', lat: 36.7794, lng: 128.0944, lines: ['무궁화호'], type: 'korail'},
+            {name: '영천역', lat: 35.9764, lng: 128.9386, lines: ['무궁화호'], type: 'korail'},
+            {name: '신경주역', lat: 35.7564, lng: 129.3278, lines: ['KTX'], type: 'korail'},
+
+            // === 경상남도 ===
+            {name: '부산역', lat: 35.1155, lng: 129.0422, lines: ['KTX', '새마을호', '무궁화호'], type: 'korail'},
+            {name: '구포역', lat: 35.2056, lng: 128.9978, lines: ['무궁화호'], type: 'korail'},
+            {name: '물금역', lat: 35.3281, lng: 129.0642, lines: ['무궁화호'], type: 'korail'},
+            {name: '밀양역', lat: 35.5042, lng: 128.7464, lines: ['무궁화호'], type: 'korail'},
+            {name: '삼랑진역', lat: 35.3428, lng: 128.8156, lines: ['무궁화호'], type: 'korail'},
+            {name: '진주역', lat: 35.1928, lng: 128.0864, lines: ['무궁화호'], type: 'korail'},
+            {name: '마산역', lat: 35.2278, lng: 128.5639, lines: ['무궁화호'], type: 'korail'},
+            {name: '창원역', lat: 35.2331, lng: 128.6831, lines: ['무궁화호'], type: 'korail'},
+            {name: '창원중앙역', lat: 35.2278, lng: 128.6917, lines: ['무궁화호'], type: 'korail'},
+            {name: '함안역', lat: 35.2667, lng: 128.4139, lines: ['무궁화호'], type: 'korail'},
+            {name: '의령역', lat: 35.3222, lng: 128.2639, lines: ['무궁화호'], type: 'korail'},
+            {name: '반성역', lat: 35.0006, lng: 128.0019, lines: ['무궁화호'], type: 'korail'},
+
+            // === 강원도 ===
+            {name: '원주역', lat: 37.3422, lng: 127.9473, lines: ['무궁화호'], type: 'korail'},
+            {name: '제천역', lat: 37.1326, lng: 128.1906, lines: ['무궁화호'], type: 'korail'},
+            {name: '태백역', lat: 37.1642, lng: 128.9856, lines: ['무궁화호'], type: 'korail'},
+            {name: '동해역', lat: 37.5242, lng: 129.1142, lines: ['무궁화호'], type: 'korail'},
             {name: '강릉역', lat: 37.7635, lng: 128.8989, lines: ['KTX'], type: 'korail'},
-            {name: '포항역', lat: 36.0413, lng: 129.3456, lines: ['새마을호', '무궁화호'], type: 'korail'}
+            {name: '정동진역', lat: 37.6922, lng: 129.0342, lines: ['무궁화호'], type: 'korail'},
+            {name: '묵호역', lat: 37.5506, lng: 129.1164, lines: ['무궁화호'], type: 'korail'},
+            {name: '삼척역', lat: 37.4481, lng: 129.1656, lines: ['무궁화호'], type: 'korail'},
+            {name: '춘천역', lat: 37.8853, lng: 127.7181, lines: ['ITX-청춘'], type: 'korail'},
+            {name: '남춘천역', lat: 37.8644, lng: 127.7297, lines: ['ITX-청춘'], type: 'korail'},
+            {name: '김유정역', lat: 37.7975, lng: 127.5817, lines: ['ITX-청춘'], type: 'korail'},
+            {name: '강촌역', lat: 37.8033, lng: 127.6031, lines: ['ITX-청춘'], type: 'korail'},
+
+            // === 경기 동부 ===
+            {name: '양평역', lat: 37.4919, lng: 127.4873, lines: ['무궁화호', 'ITX-청춘'], type: 'korail'},
+            {name: '용문역', lat: 37.5451, lng: 127.5829, lines: ['무궁화호', 'ITX-청춘'], type: 'korail'},
+            {name: '지평역', lat: 37.6306, lng: 127.6094, lines: ['무궁화호', 'ITX-청춘'], type: 'korail'},
+
+            // === 화물 전용역 및 기타 ===
+            {name: '의왕역', lat: 37.3444, lng: 126.9681, lines: ['화물'], type: 'korail'},
+            {name: '부곡역', lat: 37.2978, lng: 126.9706, lines: ['화물'], type: 'korail'},
+            {name: '오봉역', lat: 37.2456, lng: 127.0031, lines: ['화물'], type: 'korail'},
+            {name: '송탄역', lat: 36.9672, lng: 127.0561, lines: ['무궁화호', '화물'], type: 'korail'},
+            {name: '서정리역', lat: 36.9311, lng: 127.0806, lines: ['화물'], type: 'korail'},
+
+            // === 제주도 (해당없음) ===
+            // 제주도는 철도가 없으므로 제외
+
+            // === 인천 ===
+            {name: '인천역', lat: 37.4759, lng: 126.6162, lines: ['무궁화호'], type: 'korail'},
+            {name: '동인천역', lat: 37.4756, lng: 126.6325, lines: ['무궁화호'], type: 'korail'},
+            {name: '제물포역', lat: 37.4733, lng: 126.6467, lines: ['무궁화호'], type: 'korail'},
+
+            // === 기타 지선 역들 추가 ===
+            {name: '분당역', lat: 37.3595, lng: 127.1072, lines: ['분당선'], type: 'subway'},
+            {name: '수서역', lat: 37.4875, lng: 127.1017, lines: ['분당선', 'SRT'], type: 'both'},
+            {name: '지제역', lat: 37.1019, lng: 127.0894, lines: ['무궁화호'], type: 'korail'},
+            {name: '서동탄역', lat: 37.0772, lng: 127.0656, lines: ['무궁화호'], type: 'korail'},
+            {name: '병점역', lat: 37.2356, lng: 127.0481, lines: ['무궁화호'], type: 'korail'},
+            {name: '세마역', lat: 37.2033, lng: 127.0744, lines: ['무궁화호'], type: 'korail'},
+
+            // === 추가 영남권 역들 ===
+            {name: '울산역', lat: 35.5664, lng: 129.2650, lines: ['무궁화호'], type: 'korail'},
+            {name: '신화역', lat: 35.5289, lng: 129.2486, lines: ['무궁화호'], type: 'korail'},
+            {name: '동래역', lat: 35.2064, lng: 129.0814, lines: ['무궁화호'], type: 'korail'},
+            {name: '서면역', lat: 35.1578, lng: 129.0592, lines: ['무궁화호'], type: 'korail'},
+            
+            // 더 많은 역들을 추가할 수 있지만, 주요 역들을 중심으로 전국을 커버하도록 구성했습니다.
         ];
 
         // 초기화
@@ -1142,6 +1283,7 @@
             debugDiv.style.display = 'block';
         }
 
+ 
         function startGPSMonitoring() {
             if (!currentPosition) {
                 alert('GPS 위치 정보가 필요합니다');
