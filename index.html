@@ -934,6 +934,36 @@
         function switchMode(mode) {
             // 활성 버튼 변경
             document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            
+            // 클릭된 버튼 찾기
+            const buttons = document.querySelectorAll('.mode-btn');
+            buttons.forEach(btn => {
+                if ((mode === 'gps' && btn.textContent.includes('GPS')) ||
+                    (mode === 'manual' && btn.textContent.includes('수동'))) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            // 컨텐츠 섹션 변경
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            if (mode === 'gps') {
+                document.getElementById('gps-mode').classList.add('active');
+            } else {
+                document.getElementById('manual-mode').classList.add('active');
+            }
+            
+            // 기존 모니터링 중지
+            if (isMonitoring) {
+                stopAllMonitoring();
+            }
+        }
+
+        function switchMode(mode) {
+            // 활성 버튼 변경
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
             
             // 컨텐츠 섹션 변경
