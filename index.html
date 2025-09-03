@@ -994,68 +994,200 @@
         }
 
         function requestLocationPermission() {
+            // 1단계: 기본 지원 여부 확인
             if (!navigator.geolocation) {
                 updateGPSStatus('GPS 미지원', '이 브라우저는 GPS를 지원하지 않습니다');
-                updateDebugInfo('Geolocation API가 지원되지 않습니다');
+                updateDebugInfo(`
+                    ❌ Geolocation API 미지원<br>
+                    브라우저: ${navigator.userAgent}<br>
+                    해결방법: Chrome, Firefox, Safari 등 최신 브라우저 사용
+                `);
+                document.getElementById('retry-gps').style.display = 'block';
+                return;
+            }
+
+            // 2단계: HTTPS 환경 확인
+            if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+                updateGPSStatus('HTTPS 필요', 'GPS는 HTTPS 환경에서만 작동합니다');
+                updateDebugInfo(`
+                    🔒 HTTP 환경에서는 GPS 차단됨<br>
+                    현재: ${location.protocol}//${location.hostname}<br>
+                    해결방법: HTTPS 사이트에서 실행하거나 GitHub Pages 사용
+                `);
                 document.getElementById('retry-gps').style.display = 'block';
                 return;
             }
 
             document.getElementById('gps-status-text').textContent = 'GPS 권한 요청 중...';
-            updateDebugInfo('GPS 권한 요청 중...');
+            updateDebugInfo('🔍 GPS 권한 요청 시작...');
             
-            // GPS 옵션 설정
-            const options = {
+            // 3단계: 여러 옵션으로 순차 시도
+            const highAccuracyOptions = {
                 enableHighAccuracy: true,
-                timeout: 15000,  // 15초 타임아웃
-                maximumAge: 300000  // 5분까지 캐시된 위치 허용
+                timeout: 30000,      // 30초로 늘림
+                maximumAge: 60000    // 1분까지 캐시 허용
             };
 
+            const lowAccuracyOptions = {
+                enableHighAccuracy: false,
+                timeout: 15000,
+                maximumAge: 300000
+            };
+
+            const fallbackOptions = {
+                enableHighAccuracy: false,
+                timeout: 10000,
+                maximumAge: 600000   // 10분까지 허용
+            };
+
+            // 첫 번째 시도: 고정확도
+            console.log('🎯 첫 번째 시도: 고정확도 GPS');
+            updateDebugInfo('🎯 1단계: 고정확도 GPS 시도 중...');
+            
             navigator.geolocation.getCurrentPosition(
+                // 성공 콜백
                 function(position) {
-                    currentPosition = {
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude,
-                        accuracy: position.coords.accuracy
-                    };
-                    
-                    updateGPSStatus('위치 확인 완료', `위도: ${currentPosition.lat.toFixed(6)}, 경도: ${currentPosition.lng.toFixed(6)}`);
-                    updateDebugInfo(`정확도: ${Math.round(position.coords.accuracy)}m, 시간: ${new Date(position.timestamp).toLocaleTimeString()}`);
-                    
-                    findNearbyStations(currentPosition);
-                    document.getElementById('retry-gps').style.display = 'none';
+                    console.log('✅ GPS 성공:', position);
+                    handleGPSSuccess(position);
                 },
+                // 실패 시 두 번째 시도
                 function(error) {
-                    let errorMsg = 'GPS 오류: ';
-                    let debugMsg = '';
+                    console.log('⚠️ 고정확도 실패, 저정확도 시도:', error);
+                    updateDebugInfo('⚠️ 1단계 실패, 2단계: 저정확도 GPS 시도...');
                     
-                    switch(error.code) {
-                        case error.PERMISSION_DENIED:
-                            errorMsg += '위치 권한이 거부되었습니다';
-                            debugMsg = 'PERMISSION_DENIED - 사용자가 위치 접근을 거부했습니다';
-                            break;
-                        case error.POSITION_UNAVAILABLE:
-                            errorMsg += '위치 정보를 사용할 수 없습니다';
-                            debugMsg = 'POSITION_UNAVAILABLE - GPS 신호를 받을 수 없습니다';
-                            break;
-                        case error.TIMEOUT:
-                            errorMsg += '위치 요청 시간이 초과되었습니다';
-                            debugMsg = 'TIMEOUT - 15초 내에 위치를 가져올 수 없습니다';
-                            break;
-                        default:
-                            errorMsg += '알 수 없는 오류가 발생했습니다';
-                            debugMsg = `UNKNOWN ERROR (${error.code}): ${error.message}`;
-                            break;
-                    }
-                    
-                    updateGPSStatus('GPS 오류', errorMsg);
-                    updateDebugInfo(debugMsg);
-                    document.getElementById('retry-gps').style.display = 'block';
-                    
-                    console.error('GPS Error:', error);
+                    navigator.geolocation.getCurrentPosition(
+                        function(position) {
+                            console.log('✅ 저정확도 GPS 성공:', position);
+                            handleGPSSuccess(position);
+                        },
+                        // 두 번째도 실패 시 세 번째 시도
+                        function(error2) {
+                            console.log('⚠️ 저정확도도 실패, 마지막 시도:', error2);
+                            updateDebugInfo('⚠️ 2단계 실패, 3단계: 캐시된 위치 시도...');
+                            
+                            navigator.geolocation.getCurrentPosition(
+                                function(position) {
+                                    console.log('✅ 캐시 GPS 성공:', position);
+                                    handleGPSSuccess(position);
+                                },
+                                // 모든 시도 실패
+                                function(finalError) {
+                                    console.error('❌ 모든 GPS 시도 실패:', finalError);
+                                    handleGPSError(finalError);
+                                },
+                                fallbackOptions
+                            );
+                        },
+                        lowAccuracyOptions
+                    );
                 },
-                options
+                highAccuracyOptions
             );
+        }
+
+        function handleGPSSuccess(position) {
+            currentPosition = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude,
+                accuracy: position.coords.accuracy
+            };
+            
+            const coords = position.coords;
+            updateGPSStatus('✅ 위치 확인 완료', `위도: ${currentPosition.lat.toFixed(6)}, 경도: ${currentPosition.lng.toFixed(6)}`);
+            
+            updateDebugInfo(`
+                ✅ GPS 수신 성공!<br>
+                📍 위도: ${coords.latitude.toFixed(6)}<br>
+                📍 경도: ${coords.longitude.toFixed(6)}<br>
+                🎯 정확도: ${Math.round(coords.accuracy)}m<br>
+                ⏰ 시간: ${new Date(position.timestamp).toLocaleTimeString()}<br>
+                🏔️ 고도: ${coords.altitude ? Math.round(coords.altitude) + 'm' : 'N/A'}<br>
+                💨 속도: ${coords.speed ? Math.round(coords.speed * 3.6) + 'km/h' : 'N/A'}<br>
+                🧭 방향: ${coords.heading ? Math.round(coords.heading) + '°' : 'N/A'}
+            `);
+            
+            findNearbyStations(currentPosition);
+            document.getElementById('retry-gps').style.display = 'none';
+            
+            // 모니터링 버튼 활성화
+            document.getElementById('start-monitoring').disabled = false;
+        }
+
+        function handleGPSError(error) {
+            let errorMsg = 'GPS 오류: ';
+            let solution = '';
+            let debugMsg = '';
+            
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    errorMsg += '위치 권한이 거부되었습니다';
+                    debugMsg = `PERMISSION_DENIED (${error.code})`;
+                    solution = `
+                        🔧 해결 방법:<br>
+                        1️⃣ 브라우저 주소창 왼쪽 🔒 또는 📍 아이콘 클릭<br>
+                        2️⃣ '위치' 또는 'Location'을 '허용'으로 변경<br>
+                        3️⃣ 페이지 새로고침 후 재시도<br>
+                        4️⃣ Chrome: 설정 > 개인정보 > 사이트 설정 > 위치<br>
+                        5️⃣ 모바일: 브라우저 앱 설정에서 위치 권한 확인
+                    `;
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    errorMsg += '위치 정보를 사용할 수 없습니다';
+                    debugMsg = `POSITION_UNAVAILABLE (${error.code})`;
+                    solution = `
+                        🔧 해결 방법:<br>
+                        1️⃣ 기기의 위치 서비스 켜기 (설정 > 개인정보 > 위치 서비스)<br>
+                        2️⃣ 실외에서 시도해보기 (GPS 신호 수신 개선)<br>
+                        3️⃣ WiFi와 모바일 데이터 모두 켜기<br>
+                        4️⃣ 비행기 모드 껐다 켜보기<br>
+                        5️⃣ 다른 위치에서 시도해보기
+                    `;
+                    break;
+                case error.TIMEOUT:
+                    errorMsg += '위치 요청 시간이 초과되었습니다';
+                    debugMsg = `TIMEOUT (${error.code}) - 30초 내 응답 없음`;
+                    solution = `
+                        🔧 해결 방법:<br>
+                        1️⃣ 실외나 창문 근처에서 재시도<br>
+                        2️⃣ 잠시 후 다시 시도<br>
+                        3️⃣ 다른 브라우저 사용해보기<br>
+                        4️⃣ 기기 재부팅<br>
+                        5️⃣ 네트워크 연결 확인
+                    `;
+                    break;
+                default:
+                    errorMsg += `알 수 없는 오류 (코드: ${error.code})`;
+                    debugMsg = `UNKNOWN ERROR (${error.code}): ${error.message}`;
+                    solution = `
+                        🔧 일반적인 해결 방법:<br>
+                        1️⃣ 페이지 새로고침<br>
+                        2️⃣ 브라우저 캐시 삭제<br>
+                        3️⃣ 다른 브라우저/기기 시도<br>
+                        4️⃣ 수동 위치 선택 모드 사용<br>
+                        5️⃣ 개발자에게 오류 코드 ${error.code} 신고
+                    `;
+                    break;
+            }
+            
+            updateGPSStatus('❌ GPS 실패', errorMsg);
+            updateDebugInfo(`
+                ❌ ${debugMsg}<br>
+                🌐 프로토콜: ${location.protocol}<br>
+                🖥️ 브라우저: ${navigator.userAgent.split('(')[0]}<br>
+                📱 플랫폼: ${navigator.platform}<br><br>
+                ${solution}
+            `);
+            
+            document.getElementById('retry-gps').style.display = 'block';
+            document.getElementById('start-monitoring').disabled = true;
+            
+            console.error('GPS Error Details:', {
+                code: error.code,
+                message: error.message,
+                timestamp: new Date(),
+                url: location.href,
+                userAgent: navigator.userAgent
+            });
         }
 
         function updateGPSStatus(status, location) {
