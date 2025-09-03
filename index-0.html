@@ -650,12 +650,12 @@
         console.log("모든 역 정보 로딩 중...");
         try {
             // 서울시 지하철 API 호출 (샘플 URL)
-            const seoulUrl = `http://openAPI.seoul.go.kr:8088/${seoulSubwayApiKey}/json/SearchInfoBySubwayNameService/1/1000/`;
+            const seoulUrl = `https://openAPI.seoul.go.kr:8088/${seoulSubwayApiKey}/json/SearchInfoBySubwayNameService/1/1000/`;
             const seoulResponse = await fetch(seoulUrl);
             const seoulData = await seoulResponse.json();
 
             // 코레일 API 호출 (샘플 URL)
-            const korailUrl = `http://apis.data.go.kr/3011000/TrainSttnInfoService/getTrainSttnInfo?serviceKey=${korailApiKey}&pageNo=1&numOfRows=1000&_type=json`;
+            const korailUrl = `https://apis.data.go.kr/3011000/TrainSttnInfoService/getTrainSttnInfo?serviceKey=${korailApiKey}&pageNo=1&numOfRows=1000&_type=json`;
             const korailResponse = await fetch(korailUrl);
             const korailData = await korailResponse.json();
 
