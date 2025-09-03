@@ -419,7 +419,7 @@
 
         <!-- HTTPS 경고 -->
         <div id="https-warning" class="https-warning">
-            <strong⚠️ 중요!</strong><br>
+            <strong>⚠️ 중요!</strong><br>
             GPS 기능을 사용하려면 <strong>HTTPS 환경</strong>이 필요합니다.<br>
             <small>GitHub Pages에 배포하면 자동으로 HTTPS가 적용됩니다.</small>
         </div>
@@ -496,7 +496,7 @@
             </div>
 
             <div id="nearby-stations" class="nearby-stations" style="display:none;">
-                <h4>🔍 근처 지하철역</h4>
+                <h4>📍 근처 지하철역</h4>
                 <div id="stations-list"></div>
             </div>
         </div>
@@ -687,7 +687,7 @@
             {name: '서울역', lat: 37.5547, lng: 126.9706, lines: ['1호선', '4호선', 'KTX'], type: 'both'},
             {name: '이촌', lat: 37.5342, lng: 126.9675, lines: ['4호선'], type: 'subway'},
             {name: '동작', lat: 37.5020, lng: 126.9788, lines: ['4호선'], type: 'subway'},
-            {name: '이수', lat: 37.4862, lng: 126.9816, lines: ['4호선'], type: 'subway'},
+            {name: '총신대입구', lat: 37.4862, lng: 126.9816, lines: ['4호선'], type: 'subway'},
             
             // === 5호선 주요역 ===
             {name: '김포공항', lat: 37.5588, lng: 126.8014, lines: ['5호선', '9호선', '공항철도'], type: 'subway'},
@@ -927,7 +927,7 @@
             document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
             
-            // 컨텐츠 섹션 변경
+            // 콘텐츠 섹션 변경
             document.querySelectorAll('.content-section').forEach(section => {
                 section.classList.remove('active');
             });
@@ -1011,13 +1011,7 @@
                     };
                     
                     updateGPSStatus('위치 확인 완료', `위도: ${currentPosition.lat.toFixed(6)}, 경도: ${currentPosition.lng.toFixed(6)}`);
-                    updateDebugInfo(`
-                        ✅ GPS 성공!<br>
-                        정확도: ${Math.round(position.coords.accuracy)}m<br>
-                        시간: ${new Date(position.timestamp).toLocaleTimeString()}<br>
-                        고도: ${position.coords.altitude || 'N/A'}m<br>
-                        속도: ${position.coords.speed || 'N/A'}m/s
-                    `);
+                    updateDebugInfo(`정확도: ${Math.round(position.coords.accuracy)}m, 시간: ${new Date(position.timestamp).toLocaleTimeString()}`);
                     
                     findNearbyStations(currentPosition);
                     document.getElementById('retry-gps').style.display = 'none';
@@ -1025,58 +1019,28 @@
                 function(error) {
                     let errorMsg = 'GPS 오류: ';
                     let debugMsg = '';
-                    let solution = '';
                     
                     switch(error.code) {
                         case error.PERMISSION_DENIED:
                             errorMsg += '위치 권한이 거부되었습니다';
                             debugMsg = 'PERMISSION_DENIED - 사용자가 위치 접근을 거부했습니다';
-                            solution = `
-                                📱 모바일 해결방법:<br>
-                                1. 브라우저 주소창 왼쪽 자물쇠 아이콘 터치<br>
-                                2. '위치' 또는 '권한' 메뉴에서 '허용'으로 변경<br>
-                                3. 페이지 새로고침 후 재시도<br>
-                                4. Chrome: 설정 > 사이트 설정 > 위치<br>
-                                5. Safari: 설정 > Safari > 위치 서비스
-                            `;
                             break;
                         case error.POSITION_UNAVAILABLE:
                             errorMsg += '위치 정보를 사용할 수 없습니다';
                             debugMsg = 'POSITION_UNAVAILABLE - GPS 신호를 받을 수 없습니다';
-                            solution = `
-                                📡 위치 서비스 확인:<br>
-                                1. 핸드폰 설정 > 개인정보 보호 > 위치 서비스 ON<br>
-                                2. 실외에서 시도해보세요<br>
-                                3. WiFi와 모바일 데이터 모두 켜주세요<br>
-                                4. 비행기 모드 껐다 켜보기
-                            `;
                             break;
                         case error.TIMEOUT:
                             errorMsg += '위치 요청 시간이 초과되었습니다';
-                            debugMsg = 'TIMEOUT - 30초 내에 위치를 가져올 수 없습니다';
-                            solution = `
-                                ⏰ 시간 초과 해결:<br>
-                                1. 실외나 창문 근처에서 재시도<br>
-                                2. 잠시 후 다시 시도해보세요<br>
-                                3. 다른 브라우저 앱 사용해보기<br>
-                                4. 핸드폰 재부팅
-                            `;
+                            debugMsg = 'TIMEOUT - 15초 내에 위치를 가져올 수 없습니다';
                             break;
                         default:
                             errorMsg += '알 수 없는 오류가 발생했습니다';
                             debugMsg = `UNKNOWN ERROR (${error.code}): ${error.message}`;
-                            solution = `
-                                🔧 일반적인 해결방법:<br>
-                                1. 페이지 새로고침<br>
-                                2. 다른 브라우저 앱 시도<br>
-                                3. 핸드폰 재부팅<br>
-                                4. 아래 '수동 위치 선택' 모드 사용
-                            `;
                             break;
                     }
                     
                     updateGPSStatus('GPS 오류', errorMsg);
-                    updateDebugInfo(debugMsg + '<br><br>' + solution);
+                    updateDebugInfo(debugMsg);
                     document.getElementById('retry-gps').style.display = 'block';
                     
                     console.error('GPS Error:', error);
@@ -1123,7 +1087,7 @@
                 distance: calculateDistance(position.lat, position.lng, station.lat, station.lng)
             })).sort((a, b) => a.distance - b.distance);
 
-            console.log(`🟢 근처 역 ${nearbyStations.length}개 발견:`);
+            console.log(`🏢 근처 역 ${nearbyStations.length}개 발견:`);
             nearbyStations.slice(0, 10).forEach(station => {
                 console.log(`   ${station.type === 'subway' ? '🚇' : station.type === 'korail' ? '🚄' : '🚆'} ${station.name}: ${Math.round(station.distance)}m`);
             });
@@ -1185,7 +1149,7 @@
             const timestamp = new Date().toLocaleTimeString();
             
             debugInfo.innerHTML = `
-                <div style="margin-bottom: 5px;"><strong>🔍 ${timestamp}</strong></div>
+                <div style="margin-bottom: 5px;"><strong>📍 ${timestamp}</strong></div>
                 <div>${info}</div>
                 ${extraInfo ? `<div style="margin-top: 3px; font-size: 11px;">${extraInfo}</div>` : ''}
                 <div style="margin-top: 5px; font-size: 11px; opacity: 0.8;">
@@ -1457,7 +1421,7 @@
                 intervals: [30, 25, 15, 85, 35]
             },
             '경부선_일반': {
-                name: '경부선 (새마을/무궁화)',
+                name: '경부선(새마을/무궁화)',
                 stations: [
                     {name: '서울역', lat: 37.5547, lng: 126.9706, code: 'NAT010000'},
                     {name: '영등포역', lat: 37.5150, lng: 126.9076, code: 'NAT010700'},
@@ -1470,7 +1434,7 @@
                 intervals: [8, 12, 15, 20, 25, 45]
             },
             '경인선': {
-                name: '경인선 (전철)',
+                name: '경인선(전철)',
                 stations: [
                     {name: '서울역', lat: 37.5547, lng: 126.9706, code: 'NAT010000'},
                     {name: '영등포역', lat: 37.5150, lng: 126.9076, code: 'NAT010700'},
@@ -1524,7 +1488,7 @@
                 intervals: [12, 15, 35]
             },
             '신림선': {
-                name: '신림선 (경전철)',
+                name: '신림선(경전철)',
                 stations: [
                     {name: '관악산역', lat: 37.4656, lng: 126.9515, code: 'SIN010000'},
                     {name: '서울대벤처타운역', lat: 37.4699, lng: 126.9472, code: 'SIN010100'},
@@ -1536,7 +1500,7 @@
                 intervals: [3, 4, 4, 3, 2]
             },
             '우이신설선': {
-                name: '우이신설선 (경전철)',
+                name: '우이신설선(경전철)',
                 stations: [
                     {name: '북한산우이역', lat: 37.6634, lng: 127.0126, code: 'UI010000'},
                     {name: '솔밭공원역', lat: 37.6593, lng: 127.0099, code: 'UI010100'},
@@ -1610,7 +1574,7 @@
                         });
                         
                         // 디버그 정보 출력
-                        console.log(`🔍 근처 노선 발견: ${line name}`);
+                                console.log(`📍 근처 노선 발견: ${line.name}`);
                         console.log(`   구간: ${station1.name} → ${station2.name}`);
                         console.log(`   거리: ${Math.round(distanceToLine)}m`);
                         
@@ -1853,7 +1817,7 @@
         }
 
         function generateMockSubwayData(stationName) {
-            // 개발용 지하철 모의 데이터 (실제 노선-역명 매칭)
+            // 개발용 지하철 모의 데이터 (거의 항상 생성)
             const hour = new Date().getHours();
             let subwayProbability = 0.95; // 기본 95%로 대폭 상승!
             
@@ -1868,33 +1832,27 @@
                 return [];
             }
             
-            // 실제 지하철 노선별 주요 역 매핑
-            const subwayLineDestinations = {
-                '1호선': ['인천', '신도림', '서울역', '종로5가', '동묘앞', '청량리', '의정부', '소요산'],
-                '2호선': ['을지로입구', '강남', '잠실', '신도림', '홍대입구', '성수', '건대입구', '삼성', '역삼'],
-                '3호선': ['대화', '연신내', '불광', '종로3가', '을지로3가', '충무로', '동대입구', '고속터미널', '양재', '오금'],
-                '4호선': ['당고개', '창동', '수유', '미아', '동대문', '명동', '회현', '서울역', '이촌', '동작', '사당', '남태령'],
-                '5호선': ['방화', '김포공항', '강서구청', '화곡', '까치산', '영등포구청', '여의도', '마포', '공덕', '종로3가', '동대문역사문화공원', '청구', '왕십리', '군자', '천호', '강동'],
-                '6호선': ['응암', '역촌', '불광', '연신내', '구산', '새절', '증산', '디지털미디어시티', '월드컵경기장', '합정', '망원', '상수', '광화문', '동묘앞', '창신', '보문', '안암'],
-                '7호선': ['장암', '도봉산', '수락산', '마들', '노원', '중계', '하계', '공릉', '태릉입구', '먹골', '중화', '상봉', '면목', '사가정', '용마산', '중곡', '군자', '어린이대공원', '건대입구', '뚝섬유원지', '청담', '강남구청', '논현', '반포', '고속터미널', '내방', '이수', '남성', '숭실대입구', '상도', '장승배기', '신대방삼거리', '보라매', '대림'],
-                '8호선': ['암사', '천호', '잠실', '석촌', '송파', '가락시장', '문정', '장지', '복정', '산성', '남한산성입구', '단대오거리', '신흥', '수진', '모란'],
-                '9호선': ['개화', '공항시장', '신방화', '마곡나루', '양천향교', '가양', '증미', '등촌', '염창', '신목동', '선유도', '당산', '국회의사당', '여의도', '샛강', '노량진', '노들', '흑석', '동작', '구반포', '고속터미널', '신논현', '언주', '선정릉', '삼전', '석촌고분', '송파나루', '한성백제', '올림픽공원', '둔촌오륜', '중앙보훈병원'],
-                '분당선': ['왕십리', '서울숲', '압구정로데오', '강남구청', '선릉', '한티', '도곡', '구룡', '개포동', '대모산입구', '수서', '복정', '가천대', '태평', '모란', '야탑', '이매', '서현', '분당', '수내', '정자', '미금', '오리', '죽전', '보정', '구성', '신갈', '기흥', '상갈', '청명', '영통', '망포', '매탄권선', '수원'],
-                '신분당선': ['강남', '양재', '양재시민의숲', '청계산입구', '판교', '정자', '미금', '동천', '수지구청', '성복', '상현', '광교중앙', '광교'],
-                '경의중앙선': ['용산', '서빙고', '한남', '옥수', '응봉', '왕십리', '청량리', '회기', '중랑', '상봉', '망우', '양원', '구리', '도농', '양정', '덕소', '도심', '팔당', '운길산', '양수', '신원', '국수', '아신', '오빈', '양평', '원덕', '용문'],
-                '공항철도': ['인천국제공항', '공항화물청사', '운서', '검암', '계양', '김포공항', '송정', '마곡', '김포공항', '송정', '마곡', '디지털미디어시티', '홍대입구', '공덕', '서울역'],
-                '신림선': ['신림', '서원', '상도', '관악산'],
-                '우이신설선': ['북한산우이', '솔밭공원', '4.19민주묘지', '가오리', '화계', '삼양', '삼양사거리', '솔샘', '북한산보국문', '정릉', '성신여대입구', '보문', '신설동']
-            };
-            
             const numTrains = Math.floor(Math.random() * 4) + 2; // 2-5대로 증가!
             const trains = [];
             
+            // 실제 서울 지하철 노선
+            const realSubwayLines = [
+                '1호선', '2호선', '3호선', '4호선', '5호선', 
+                '6호선', '7호선', '8호선', '9호선', 
+                '분당선', '신분당선', '경의중앙선', '공항철도',
+                '신림선', '우이신설선'
+            ];
+            
+            const destinations = [
+                '강남', '신도림', '사당', '잠실', '홍대입구', '신촌', 
+                '종로3가', '명동', '이대', '건대입구', '왕십리', '교대',
+                '고속터미널', '김포공항', '인천', '수원', '성수', '합정',
+                '신림', '관악산', '북한산우이', '신설동', '보문', '정릉'
+            ];
+            
             for (let i = 0; i < numTrains; i++) {
-                const lineKeys = Object.keys(subwayLineDestinations);
-                const line = lineKeys[Math.floor(Math.random() * lineKeys.length)];
-                const possibleDestinations = subwayLineDestinations[line];
-                const destination = possibleDestinations[Math.floor(Math.random() * possibleDestinations.length)];
+                const line = realSubwayLines[Math.floor(Math.random() * realSubwayLines.length)];
+                const destination = destinations[Math.floor(Math.random() * destinations.length)];
                 const minutesUntil = Math.floor(Math.random() * 12) + 1; // 1-12분
                 
                 const train = {
@@ -1928,24 +1886,16 @@
             const currentTime = new Date();
             const hour = currentTime.getHours();
             
-            // 주요 역 판별 (용산, 서울, 대전 등 주요 역은 거의 항상 열차 있음)
-            const majorStations = ['용산역', '서울역', '대전역', '부산역', '대구역', '광주송정역', '목포역', '청량리역'];
-            const isMajorStation = majorStations.some(major => stationName.includes(major.replace('역', '')));
+            // 시간대별 열차 운행 빈도 조정 (화물기차는 24시간 운행)
+            let trainProbability = 0.7; // 기본 70%로 증가
             
-            // 시간대별 열차 운행 빈도 조정 (주요역은 더 높은 확률)
-            let trainProbability = isMajorStation ? 0.95 : 0.7; // 주요역은 기본 95%
-            
-            if (isMajorStation) {
-                trainProbability = 0.98; // 주요역은 거의 항상 98%
-            } else {
-                if (hour >= 6 && hour <= 9) trainProbability = 0.95; // 출근 시간 95%
-                else if (hour >= 17 && hour <= 20) trainProbability = 0.9; // 퇴근 시간 90%
-                else if (hour >= 10 && hour <= 16) trainProbability = 0.8; // 오전/오후 80%
-                else if (hour >= 21 || hour <= 5) trainProbability = 0.6; // 심야 시간 60% (화물기차 많음)
-            }
+            if (hour >= 6 && hour <= 9) trainProbability = 0.95; // 출근 시간 95%
+            else if (hour >= 17 && hour <= 20) trainProbability = 0.9; // 퇴근 시간 90%
+            else if (hour >= 10 && hour <= 16) trainProbability = 0.8; // 오전/오후 80%
+            else if (hour >= 21 || hour <= 5) trainProbability = 0.6; // 심야 시간 60% (화물기차 많음)
             
             // 디버그 정보
-            console.log(`🕐 현재 ${hour}시, ${isMajorStation ? '주요역' : '일반역'}, 열차 확률: ${Math.round(trainProbability * 100)}%`);
+            console.log(`🕐 현재 ${hour}시, 열차 확률: ${Math.round(trainProbability * 100)}%`);
             
             if (Math.random() > trainProbability) {
                 console.log(`🚫 확률적으로 열차 없음`);
@@ -2106,7 +2056,7 @@
                             ${trainIcon} 열차번호: ${train.trainNo}
                             ${train.departureStation ? `<br>🚩 출발: ${train.departureStation}` : ''}
                             ${train.passingTime ? `<br>🕐 통과예정: ${train.passingTime}` : ''}
-                            ${train.estimatedLocation ? `<br>🔍 현재위치: ${train.estimatedLocation}` : ''}
+                            ${train.estimatedLocation ? `<br>📍 현재위치: ${train.estimatedLocation}` : ''}
                             ${train.isFreight ? `<br>⚠️ 화물열차` : ''}
                         </div>
                     `;
@@ -2314,17 +2264,6 @@
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 
             return R * c;
-        }
-
-        function getTrainTypeName(trainType) {
-            const typeNames = {
-                '01': 'KTX',
-                '02': '새마을호',
-                '03': '무궁화호',
-                '04': 'ITX-새마을',
-                '05': '화물열차'
-            };
-            return typeNames[trainType] || '일반열차';
         }
 
         // PWA 지원을 위한 서비스 워커 등록
