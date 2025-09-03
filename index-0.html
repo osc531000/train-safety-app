@@ -1218,16 +1218,104 @@
             }
         }
 
-        function updateMonitoringInfo(stationCount, interval = null, detectedLines = 0) {
-            document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
-            document.getElementById('nearby-stations-count').textContent = stationCount;
-            document.getElementById('detected-lines').textContent = `${detectedLines}개`;
+        function hideWarning() {
+            document.getElementById('gps-warning').classList.remove('show');
+            document.getElementById('manual-warning').classList.remove('show');
             
-            if (interval) {
-                const intervalText = interval >= 60000 ? 
-                    `${interval/60000}분` : 
-                    `${interval/1000}초`;
-                document.getElementById('current-interval').textContent = intervalText;
+            const indicators = [
+                document.getElementById('gps-status-indicator'),
+                document.getElementById('manual-status-indicator')
+            ];
+            
+            indicators.forEach(indicator => {
+                indicator.className = 'status-indicator status-safe';
+                indicator.textContent = '📍';
+            });
+        }
+
+        function triggerAlarm() {
+            if (navigator.vibrate) {
+                navigator.vibrate([500, 200, 500, 200, 500]);
+            }
+            
+            if (alarmSound) {
+                alarmSound.play().catch(e => console.log('알람음 재생 실패:', e));
+                
+                setTimeout(() => {
+                    if (alarmSound && !alarmSound.paused) {
+                        alarmSound.pause();
+                        alarmSound.currentTime = 0;
+                    }
+                }, 3000);
+            }
+        }
+
+        function stopAlarm() {
+            if (alarmSound) {
+                alarmSound.pause();
+                alarmSound.currentTime = 0;
+            }
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error-display');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        function updateMonitoringInfo(stationCount, interval = null, detectedLines = 0) {
+            const isGPSMode = document.getElementById('gps-mode').classList.contains('active');
+            
+            if (isGPSMode) {
+                document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+                document.getElementById('nearby-stations-count').textContent = stationCount;
+                document.getElementById('detected-lines').textContent = `${detectedLines}개`;
+                
+                if (interval) {
+                    const intervalText = interval >= 60000 ? 
+                        `${interval/60000}분` : 
+                        `${interval/1000}초`;
+                    document.getElementById('current-interval').textContent = intervalText;
+                }
+                
+                const warningStatusElement = document.getElementById('warning-status');
+                if (currentWarningState.isActive) {
+                    const duration = Math.floor((new Date() - currentWarningState.warningStartTime) / 1000);
+                    warningStatusElement.textContent = `🚨 경고 중 (${duration}초)`;
+                    warningStatusElement.style.color = '#f44336';
+                    warningStatusElement.style.fontWeight = 'bold';
+                } else {
+                    warningStatusElement.textContent = '✅ 안전';
+                    warningStatusElement.style.color = '#4caf50';
+                    warningStatusElement.style.fontWeight = 'normal';
+                }
+            } else {
+                document.getElementById('manual-last-update').textContent = new Date().toLocaleTimeString();
+                document.getElementById('manual-nearby-stations-count').textContent = stationCount;
+                document.getElementById('manual-detected-lines').textContent = `${detectedLines}개`;
+                
+                if (interval) {
+                    const intervalText = interval >= 60000 ? 
+                        `${interval/60000}분` : 
+                        `${interval/1000}초`;
+                    document.getElementById('manual-current-interval').textContent = intervalText;
+                }
+                
+                const manualWarningStatusElement = document.getElementById('manual-warning-status');
+                if (currentWarningState.isActive) {
+                    const duration = Math.floor((new Date() - currentWarningState.warningStartTime) / 1000);
+                    manualWarningStatusElement.textContent = `🚨 경고 중 (${duration}초)`;
+                    manualWarningStatusElement.style.color = '#f44336';
+                    manualWarningStatusElement.style.fontWeight = 'bold';
+                } else {
+                    manualWarningStatusElement.textContent = '✅ 안전';
+                    manualWarningStatusElement.style.color = '#4caf50';
+                    manualWarningStatusElement.style.fontWeight = 'normal';
+                }
             }
         }
 
