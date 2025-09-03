@@ -650,7 +650,7 @@ async function fetchAllStations() {
     console.log("모든 역 정보 로딩 중...");
     try {
         // 서울시 지하철 API 호출 (수정된 URL)
-        const seoulUrl = `http://swopenAPI.seoul.go.kr/api/subway/${seoulSubwayApiKey}/json/SearchInfoBySubwayNameService/1/1000/`;
+        const seoulUrl = `https://swopenAPI.seoul.go.kr/api/subway/${seoulSubwayApiKey}/json/SearchInfoBySubwayNameService/1/1000/`;
         const seoulResponse = await fetch(seoulUrl);
         const seoulData = await seoulResponse.json();
 
