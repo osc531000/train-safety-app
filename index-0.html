@@ -1073,7 +1073,6 @@
         ];
 
 
-
         // 초기화
         document.addEventListener('DOMContentLoaded', function() {
             initializeApp();
@@ -1846,12 +1845,11 @@
                 return;
             }
             
-            // 가장 빠른 열차의 카운트다운 표시 (불확실성 포함)
+            // 가장 빠른 열차의 카운트다운 표시
             const closestTrain = predictions[0];
             const countdownText = `${Math.floor(closestTrain.timeToPass / 60)}:${(closestTrain.timeToPass % 60).toString().padStart(2, '0')}`;
-            const uncertaintyText = `±${Math.floor(closestTrain.uncertainty / 60)}:${(closestTrain.uncertainty % 60).toString().padStart(2, '0')}`;
             
-            countdownElement.textContent = `${countdownText} (${uncertaintyText}) - ${closestTrain.train.line}`;
+            countdownElement.textContent = `${countdownText} - ${closestTrain.train.line}`;
             
             if (closestTrain.timeToPass <= 60) {
                 countdownElement.className = 'countdown-display countdown-danger';
@@ -1861,7 +1859,7 @@
                 countdownElement.className = 'countdown-display countdown-safe';
             }
             
-            // 예측 목록 표시 (고급 정보 포함)
+            // 예측 목록 표시
             predictionsList.innerHTML = '';
             predictions.slice(0, 5).forEach(prediction => {
                 const predictionDiv = document.createElement('div');
@@ -1877,30 +1875,14 @@
                 const seconds = prediction.timeToPass % 60;
                 const timeDisplay = minutes > 0 ? `${minutes}분 ${seconds}초` : `${seconds}초`;
                 
-                const uncertaintyMinutes = Math.floor(prediction.uncertainty / 60);
-                const uncertaintySeconds = prediction.uncertainty % 60;
-                const uncertaintyDisplay = uncertaintyMinutes > 0 ? 
-                    `±${uncertaintyMinutes}분 ${uncertaintySeconds}초` : `±${uncertaintySeconds}초`;
-                
-                const typeIcon = prediction.train.type === 'subway' ? '지하철' : '일반열차';
-                
-                // 환경 점수를 퍼센트로 변환
-                const envPercent = Math.round(prediction.environmentalScore * 100);
-                const weatherIcon = {
-                    'clear': '맑음',
-                    'rain': '비',
-                    'fog': '안개',
-                    'snow': '눈'
-                }[prediction.weather] || '맑음';
+                const typeIcon = prediction.train.type === 'subway' ? '🚇' : '🚄';
                 
                 predictionDiv.innerHTML = `
                     <div style="font-weight: bold;">${typeIcon} ${prediction.train.line} - ${prediction.station.name}</div>
                     <div style="margin-top: 5px; color: #666;">
-                        <strong>통과 예상: ${timeDisplay} ${uncertaintyDisplay}</strong><br>
+                        통과 예상: ${timeDisplay} 후<br>
                         현재 위치: ${prediction.estimatedLocation}<br>
-                        신뢰도: ${prediction.confidence.point}% (${prediction.confidence.lower}-${prediction.confidence.upper}%)<br>
-                        환경 조건: ${weatherIcon}, 운행효율 ${envPercent}%<br>
-                        GPS 거리: ${prediction.gpsDistance}m | 가속단계: ${prediction.accelerationPhase}
+                        신뢰도: ${prediction.confidence}% | GPS 거리: ${prediction.gpsDistance}m
                     </div>
                 `;
                 
