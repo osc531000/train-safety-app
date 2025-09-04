@@ -712,7 +712,7 @@
             korail: 'b94e2e220ed1c348f7fe613a70da4ac557a1888a5d25f0e6e3d0e91e41ce4618'
         };
 
-       // 서울 지하철역 + 코레일 주요 역 데이터 (수정 및 보완)
+      // 서울 지하철역 + 코레일 주요 역 데이터 (수정 및 보완)
         const TRAIN_STATIONS = [
             // === 1호선 주요역 ===
             {name: '서울역', lat: 37.5547, lng: 126.9706, lines: ['1호선', 'KTX', '공항철도'], type: 'both'},
@@ -1071,7 +1071,6 @@
             
             // 더 많은 역들을 추가할 수 있지만, 주요 역들을 중심으로 전국을 커버하도록 구성했습니다.
         ];
-
 
         // 초기화
         document.addEventListener('DOMContentLoaded', function() {
@@ -1845,11 +1844,12 @@
                 return;
             }
             
-            // 가장 빠른 열차의 카운트다운 표시
+            // 가장 빠른 열차의 카운트다운 표시 (불확실성 포함)
             const closestTrain = predictions[0];
             const countdownText = `${Math.floor(closestTrain.timeToPass / 60)}:${(closestTrain.timeToPass % 60).toString().padStart(2, '0')}`;
+            const uncertaintyText = `±${Math.floor(closestTrain.uncertainty / 60)}:${(closestTrain.uncertainty % 60).toString().padStart(2, '0')}`;
             
-            countdownElement.textContent = `${countdownText} - ${closestTrain.train.line}`;
+            countdownElement.textContent = `${countdownText} (${uncertaintyText}) - ${closestTrain.train.line}`;
             
             if (closestTrain.timeToPass <= 60) {
                 countdownElement.className = 'countdown-display countdown-danger';
@@ -1859,7 +1859,7 @@
                 countdownElement.className = 'countdown-display countdown-safe';
             }
             
-            // 예측 목록 표시
+            // 예측 목록 표시 (고급 정보 포함)
             predictionsList.innerHTML = '';
             predictions.slice(0, 5).forEach(prediction => {
                 const predictionDiv = document.createElement('div');
@@ -1875,14 +1875,30 @@
                 const seconds = prediction.timeToPass % 60;
                 const timeDisplay = minutes > 0 ? `${minutes}분 ${seconds}초` : `${seconds}초`;
                 
-                const typeIcon = prediction.train.type === 'subway' ? '🚇' : '🚄';
+                const uncertaintyMinutes = Math.floor(prediction.uncertainty / 60);
+                const uncertaintySeconds = prediction.uncertainty % 60;
+                const uncertaintyDisplay = uncertaintyMinutes > 0 ? 
+                    `±${uncertaintyMinutes}분 ${uncertaintySeconds}초` : `±${uncertaintySeconds}초`;
+                
+                const typeIcon = prediction.train.type === 'subway' ? '지하철' : '일반열차';
+                
+                // 환경 점수를 퍼센트로 변환
+                const envPercent = Math.round(prediction.environmentalScore * 100);
+                const weatherIcon = {
+                    'clear': '맑음',
+                    'rain': '비',
+                    'fog': '안개',
+                    'snow': '눈'
+                }[prediction.weather] || '맑음';
                 
                 predictionDiv.innerHTML = `
                     <div style="font-weight: bold;">${typeIcon} ${prediction.train.line} - ${prediction.station.name}</div>
                     <div style="margin-top: 5px; color: #666;">
-                        통과 예상: ${timeDisplay} 후<br>
+                        <strong>통과 예상: ${timeDisplay} ${uncertaintyDisplay}</strong><br>
                         현재 위치: ${prediction.estimatedLocation}<br>
-                        신뢰도: ${prediction.confidence}% | GPS 거리: ${prediction.gpsDistance}m
+                        신뢰도: ${prediction.confidence.point}% (${prediction.confidence.lower}-${prediction.confidence.upper}%)<br>
+                        환경 조건: ${weatherIcon}, 운행효율 ${envPercent}%<br>
+                        GPS 거리: ${prediction.gpsDistance}m | 가속단계: ${prediction.accelerationPhase}
                     </div>
                 `;
                 
