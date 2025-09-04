@@ -1471,9 +1471,22 @@
         }
 
         function getKorailDestination(trainType) {
-            if (trainType.includes('KTX')) {
-                return ['부산', '대구', '광주송정', '목포'][Math.floor(Math.random() * 4)];
+            const destinations = {
+                'KTX': ['부산', '대구동대구', '광주송정', '목포', '강릉', '여수EXPO'],
+                '새마을호': ['부산', '대전', '대구', '광주', '목포', '여수', '포항'],
+                '무궁화호': ['부산', '대전', '대구', '광주', '목포', '여수', '포항', '춘천', '강릉', '제천', '안동'],
+                'ITX-청춘': ['춘천', '강릉', '남춘천'],
+                'ITX-새마을': ['부산', '대전', '동대구']
+            };
+            
+            // 정확한 열차 타입 찾기
+            for (const [type, dests] of Object.entries(destinations)) {
+                if (trainType.includes(type) || trainType === type) {
+                    return dests[Math.floor(Math.random() * dests.length)];
+                }
             }
+            
+            // 기본값
             return ['부산', '대전', '대구', '광주'][Math.floor(Math.random() * 4)];
         }
 
