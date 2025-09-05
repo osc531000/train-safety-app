@@ -1762,7 +1762,8 @@
                 
                 let statusColor = '#4caf50';
                 let typeIcon = train.type === 'subway' ? '🚇' : 
-                              train.type === 'bus' ? '🚌' : '🚆';
+                              train.type === 'bus' ? '🚌' : 
+                              train.type === 'korail' ? '🚄' : '🚆';
                 
                 if (train.arrivalCode === '0' || 
                     train.arrivalMessage?.includes('진입') || 
@@ -1783,6 +1784,7 @@
                         ${train.direction || ''} | ${train.destination || '목적지'} 방면<br>
                         <span style="color:${statusColor};font-weight:bold;">${train.arrivalMessage}</span>
                         ${train.trainNo ? `<br><small>열차번호: ${train.trainNo}</small>` : ''}
+                        ${train.departureStation ? `<br><small>출발역: ${train.departureStation}</small>` : ''}
                     </div>
                 `;
                 trainItems.appendChild(trainDiv);
